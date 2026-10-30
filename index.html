@@ -174,7 +174,7 @@
           <div>
             <h3 class="text-2xl font-bold fredoka text-cyan-200 mb-2">Layar Peserta / HP</h3>
             <p class="text-xs sm:text-sm text-cyan-300/80 mb-6">
-              Masukkan Game PIN, kirim angka tebakan unik, dan dapatkan umpan balik langsung Posisi & Angka Benar.
+              Masukkan Game PIN, kirim angka tebakan unik (1x per sesi), dan dapatkan hasil Posisi & Angka Benar.
             </p>
           </div>
           <button class="w-full py-3.5 px-6 rounded-2xl bg-cyan-500 hover:bg-cyan-400 font-bold fredoka text-lg shadow-lg border-b-4 border-cyan-700 active:border-b-0 text-white">
@@ -267,12 +267,15 @@
       <div class="w-full bg-slate-900/90 border-2 border-indigo-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl mb-6 backdrop-blur-xl flex flex-wrap justify-between items-center gap-4">
         
         <div>
-          <span class="text-xs text-slate-400 font-bold uppercase">GAME PIN: <strong id="dash-pin" class="text-amber-400 text-base">------</strong></span>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400 font-bold uppercase">GAME PIN: <strong id="dash-pin" class="text-amber-400 text-base">------</strong></span>
+            <span class="text-xs text-slate-400 font-bold uppercase">| SESI KE: <strong id="dash-session-num" class="text-cyan-400 text-base">#1</strong></span>
+          </div>
           <h3 class="text-xl sm:text-2xl font-black fredoka text-white">SESI MONITORING LIVE</h3>
         </div>
 
-        <!-- TIMER DISPLAY -->
-        <div class="flex items-center gap-4">
+        <!-- TIMER DISPLAY & CONTROLS -->
+        <div class="flex items-center gap-3">
           <div class="flex flex-col items-center bg-slate-950/70 px-5 py-2 rounded-2xl border border-amber-400/30">
             <span class="text-[10px] text-slate-400 font-bold uppercase">Waktu Sesi</span>
             <span id="dash-timer" class="text-3xl sm:text-4xl font-black fredoka text-amber-400">15s</span>
@@ -302,7 +305,7 @@
 
         <!-- TABLE HEADER -->
         <div class="grid grid-cols-12 gap-2 px-4 py-2 bg-slate-950/60 rounded-xl font-bold text-xs text-slate-400 uppercase tracking-wider mb-2 text-center">
-          <div class="col-span-1">#</div>
+          <div class="col-span-1">SESI</div>
           <div class="col-span-4 text-left">NICKNAME</div>
           <div class="col-span-3">TEBAKAN</div>
           <div class="col-span-2 text-emerald-400">POSISI BENAR</div>
@@ -382,6 +385,11 @@
         </div>
 
         <div class="flex items-center gap-3">
+          <div class="text-center bg-slate-950 px-3 py-1 rounded-xl border border-cyan-400/30">
+            <span class="text-[9px] text-slate-400 font-bold block">SESI</span>
+            <span id="player-session-num" class="text-base font-black fredoka text-cyan-400">#1</span>
+          </div>
+
           <div id="player-timer-badge" class="text-center bg-slate-950 px-3.5 py-1 rounded-xl border border-amber-400/30">
             <span class="text-[9px] text-slate-400 font-bold block">TIMER</span>
             <span id="player-timer" class="text-lg font-black fredoka text-amber-400">15s</span>
@@ -389,10 +397,17 @@
         </div>
       </div>
 
-      <!-- SESSION INTERMISSION PAUSE OVERLAY BANNER -->
+      <!-- STATUS BANNERS (SUBMITTED / PAUSED) -->
+      <div id="session-submitted-banner" class="w-full bg-gradient-to-r from-emerald-600/90 to-teal-600/90 border-2 border-emerald-300 rounded-2xl p-3 mb-3 text-center shadow-lg backdrop-blur-md hidden animate-slide-in">
+        <p class="text-sm font-black fredoka text-white flex items-center justify-center gap-2">
+          <i class="fa-solid fa-circle-check text-emerald-200"></i> TEBAKAN SESI <span id="banner-session-num">#1</span> TERKIRIM! (1/1)
+        </p>
+        <p class="text-[11px] text-emerald-100 font-semibold">Menunggu Host menekan "Lanjut Sesi" untuk sesi berikutnya...</p>
+      </div>
+
       <div id="session-pause-banner" class="w-full bg-gradient-to-r from-amber-600/90 to-rose-600/90 border-2 border-amber-300 rounded-2xl p-3 mb-3 text-center shadow-lg backdrop-blur-md hidden animate-pulse-subtle">
         <p class="text-sm font-black fredoka text-white flex items-center justify-center gap-2">
-          <i class="fa-solid fa-circle-pause text-amber-200"></i> SESI TERJEDA (0s)
+          <i class="fa-solid fa-circle-pause text-amber-200"></i> SESI TERJEDA / WAKTU HABIS (0s)
         </p>
         <p class="text-[11px] text-amber-100 font-semibold">Menunggu Host menekan "Lanjut Sesi (15s)"...</p>
       </div>
@@ -405,7 +420,7 @@
 
         <!-- SLOTS CONTAINER -->
         <div id="digit-slots-container" class="flex justify-center gap-3 mb-1">
-          <!-- Dynamically Generated 3 or 4 Slots -->
+          <!-- Dynamically Generated Slots -->
         </div>
 
         <p id="keypad-error-msg" class="text-xs text-rose-400 font-bold h-4"></p>
@@ -447,7 +462,7 @@
           <table class="w-full text-left border-collapse">
             <thead>
               <tr class="bg-slate-950/80 text-[10px] font-bold text-slate-400 uppercase text-center border-b border-white/10">
-                <th class="py-2 px-2">NO</th>
+                <th class="py-2 px-2">SESI</th>
                 <th class="py-2 px-3 text-left">TEBAKAN</th>
                 <th class="py-2 px-2 text-emerald-400">POSISI BENAR</th>
                 <th class="py-2 px-2 text-cyan-400">ANGKA BENAR</th>
@@ -533,7 +548,7 @@
        2. GLOBAL STATE & VARIABLES
        ========================================================================= */
     let isSoundOn = true;
-    let selectedDigitMode = 4; // Default 4 digits
+    let selectedDigitMode = 4;
     let currentRoomPin = null;
     let isHost = false;
     let localPlayerId = 'player_' + Math.random().toString(36).substr(2, 9);
@@ -541,7 +556,9 @@
     let currentSecretCode = '';
     let activeTimerInterval = null;
     let currentInputDigits = [];
-    let isSessionActive = true; // Timer > 0 AND session running
+    let currentSessionNumber = 1;
+    let isSessionActive = true;
+    let hasSubmittedThisSession = false;
     let roomRef = null;
     let guessesRef = null;
 
@@ -579,8 +596,8 @@
           osc.stop(now + 0.04);
         } else if (type === 'success') {
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(523.25, now); // C5
-          osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.setValueAtTime(659.25, now + 0.08);
           gain.gain.setValueAtTime(0.15, now);
           gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
           osc.start(now);
@@ -641,7 +658,6 @@
     /* =========================================================================
        5. GAME LOGIC: DIGIT GENERATION & EVALUATION
        ========================================================================= */
-    // Generates N unique digits (0-9)
     function generateSecretCode(digitsCount) {
       const nums = ['0','1','2','3','4','5','6','7','8','9'];
       for (let i = nums.length - 1; i > 0; i--) {
@@ -651,9 +667,6 @@
       return nums.slice(0, digitsCount).join('');
     }
 
-    // Evaluates Posisi Benar & Angka Benar based on requested definitions:
-    // Posisi Benar = digit matched in value AND exact position
-    // Angka Benar = total digits matched in value regardless of position
     function evaluateGuess(secretCode, guess) {
       let posisiBenar = 0;
       let angkaBenar = 0;
@@ -700,35 +713,30 @@
 
     function createHostRoom() {
       playSound('click');
-      // Generate 6-digit PIN
       currentRoomPin = Math.floor(100000 + Math.random() * 900000).toString();
       currentSecretCode = generateSecretCode(selectedDigitMode);
 
-      // Create room in Firebase
       roomRef = db.ref('rooms/' + currentRoomPin);
       roomRef.set({
         pin: currentRoomPin,
         digitMode: selectedDigitMode,
         secretCode: currentSecretCode,
-        status: 'LOBBY', // LOBBY, PLAYING, FINISHED
+        status: 'LOBBY',
         timer: 15,
         sessionActive: false,
-        session: 1,
+        sessionNumber: 1,
         createdAt: firebase.database.ServerValue.TIMESTAMP
       });
 
-      // Update UI
       document.getElementById('host-setup-card').classList.add('hidden');
       document.getElementById('host-active-lobby').classList.remove('hidden');
       document.getElementById('display-game-pin').innerText = currentRoomPin;
       document.getElementById('display-digit-mode-badge').innerText = selectedDigitMode + ' Digit';
 
-      // QR Code
       const currentUrl = window.location.href.split('?')[0];
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl + '?pin=' + currentRoomPin)}`;
       document.getElementById('qr-code-img').src = qrUrl;
 
-      // Listen to Joined Players
       listenLobbyPlayers();
     }
 
@@ -755,15 +763,18 @@
 
     function startHostGame() {
       playSound('success');
+      currentSessionNumber = 1;
+
       roomRef.update({
         status: 'PLAYING',
         timer: 15,
         sessionActive: true,
-        session: 1
+        sessionNumber: 1
       });
 
       showScreen('screen-host-dashboard');
       document.getElementById('dash-pin').innerText = currentRoomPin;
+      document.getElementById('dash-session-num').innerText = '#' + currentSessionNumber;
       
       startHostTimer();
       listenHostFeed();
@@ -792,7 +803,15 @@
 
     function nextSession15s() {
       playSound('click');
-      db.ref(`rooms/${currentRoomPin}/session`).transaction(s => (s || 1) + 1);
+      currentSessionNumber++;
+      document.getElementById('dash-session-num').innerText = '#' + currentSessionNumber;
+
+      roomRef.update({
+        sessionNumber: currentSessionNumber,
+        timer: 15,
+        sessionActive: true
+      });
+
       startHostTimer();
     }
 
@@ -823,7 +842,7 @@
         // Sort newest first
         guessesList.sort((a, b) => b.timestamp - a.timestamp);
 
-        // STRICT FIFO LIMIT: Take top 10 latest guesses
+        // STRICT FIFO LIMIT: Top 10 latest guesses
         const feed10 = guessesList.slice(0, 10);
 
         const container = document.getElementById('host-feed-list');
@@ -836,9 +855,9 @@
           return;
         }
 
-        container.innerHTML = feed10.map((g, idx) => `
+        container.innerHTML = feed10.map((g) => `
           <div class="grid grid-cols-12 gap-2 px-4 py-3 bg-slate-800/90 hover:bg-slate-800 border border-white/10 rounded-2xl items-center text-center font-bold text-sm animate-slide-in">
-            <div class="col-span-1 text-slate-400 text-xs">${idx + 1}</div>
+            <div class="col-span-1 text-cyan-400 font-extrabold text-xs">#${g.sessionNumber || 1}</div>
             <div class="col-span-4 text-left text-amber-300 font-extrabold truncate flex items-center gap-1.5">
               <i class="fa-solid fa-user-circle text-purple-400"></i> ${escapeHtml(g.nickname)}
             </div>
@@ -873,7 +892,6 @@
         }
       });
 
-      // Listen room status for finished
       roomRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
@@ -883,9 +901,8 @@
       });
     }
 
-
     /* =========================================================================
-       8. PESERTA LOGIC
+       8. PESERTA LOGIC & REALTIME SYNC
        ========================================================================= */
     function joinGameAsPlayer(e) {
       e.preventDefault();
@@ -899,7 +916,6 @@
       currentRoomPin = pin;
       localPlayerNickname = nickname;
 
-      // Check if room exists
       db.ref(`rooms/${pin}`).once('value', (snapshot) => {
         const roomData = snapshot.val();
         if (!roomData) {
@@ -907,17 +923,14 @@
           return;
         }
 
-        // Add player to room
         db.ref(`rooms/${pin}/players/${localPlayerId}`).set({
           nickname: nickname,
           joinedAt: firebase.database.ServerValue.TIMESTAMP
         });
 
-        // Show Waiting Screen
         showScreen('screen-player-waiting');
         document.getElementById('wait-player-name').innerText = 'Nickname: ' + nickname;
 
-        // Listen for status change
         listenPlayerRoomStatus(pin);
       });
     }
@@ -929,13 +942,17 @@
 
         selectedDigitMode = room.digitMode || 4;
         currentSecretCode = room.secretCode || '';
+        currentSessionNumber = room.sessionNumber || 1;
 
-        // Timer Sync & Session Intermission Lock
         const timerVal = room.timer !== undefined ? room.timer : 0;
         const activeState = room.sessionActive === true && timerVal > 0;
         isSessionActive = activeState;
 
+        // Update Header Badges
         const timerEl = document.getElementById('player-timer');
+        const sessEl = document.getElementById('player-session-num');
+        if (sessEl) sessEl.innerText = '#' + currentSessionNumber;
+
         if (timerEl) {
           timerEl.innerText = timerVal + 's';
           if (timerVal === 0) {
@@ -947,10 +964,6 @@
           }
         }
 
-        // Toggle Keypad Lock / Banner based on Session Timer
-        togglePlayerKeypadLock(!activeState);
-
-        // Auto transition on STATUS == PLAYING
         if (room.status === 'PLAYING') {
           const gameplayScreen = document.getElementById('screen-player-gameplay');
           if (gameplayScreen.classList.contains('hidden')) {
@@ -958,34 +971,63 @@
             document.getElementById('game-player-nickname').innerText = localPlayerNickname;
             document.getElementById('player-mode-digit-text').innerText = selectedDigitMode + ' DIGIT';
             renderDigitSlots();
-            listenMyGuessesHistory();
           }
+
+          // Check if player already submitted for this specific session
+          checkPlayerSessionSubmittedState();
         } else if (room.status === 'FINISHED' && room.winner) {
           triggerWinnerCelebration(room.winner.nickname, room.secretCode);
         }
       });
+
+      // Listen to guesses history
+      listenMyGuessesHistory();
     }
 
-    /* =========================================================================
-       9. PLAYER KEYPAD & INPUT SLOTS (WITH SESSION TIMER LOCK)
-       ========================================================================= */
-    function togglePlayerKeypadLock(isLocked) {
-      const banner = document.getElementById('session-pause-banner');
+    function checkPlayerSessionSubmittedState() {
+      db.ref(`rooms/${currentRoomPin}/guesses`).once('value', (snapshot) => {
+        const guessesObj = snapshot.val() || {};
+        const myGuesses = Object.values(guessesObj).filter(g => g.playerId === localPlayerId);
+        
+        hasSubmittedThisSession = myGuesses.some(g => g.sessionNumber === currentSessionNumber);
+
+        updatePlayerKeypadUI();
+      });
+    }
+
+    function updatePlayerKeypadUI() {
+      const submittedBanner = document.getElementById('session-submitted-banner');
+      const pauseBanner = document.getElementById('session-pause-banner');
       const container = document.getElementById('keypad-container');
       const submitBtn = document.getElementById('btn-submit-guess');
       const numpadBtns = document.querySelectorAll('.numpad-btn');
       const clearBtn = document.getElementById('btn-clear');
       const deleteBtn = document.getElementById('btn-delete');
 
-      if (isLocked) {
-        if (banner) banner.classList.remove('hidden');
+      document.getElementById('banner-session-num').innerText = '#' + currentSessionNumber;
+
+      if (hasSubmittedThisSession) {
+        // Player already submitted 1/1 for this session -> Lock Keypad
+        if (submittedBanner) submittedBanner.classList.remove('hidden');
+        if (pauseBanner) pauseBanner.classList.add('hidden');
+        if (container) container.classList.add('opacity-40', 'pointer-events-none');
+        if (submitBtn) submitBtn.disabled = true;
+        numpadBtns.forEach(b => b.disabled = true);
+        if (clearBtn) clearBtn.disabled = true;
+        if (deleteBtn) deleteBtn.disabled = true;
+      } else if (!isSessionActive) {
+        // Session Timer is 0 or Paused -> Lock Keypad
+        if (submittedBanner) submittedBanner.classList.add('hidden');
+        if (pauseBanner) pauseBanner.classList.remove('hidden');
         if (container) container.classList.add('opacity-40', 'pointer-events-none');
         if (submitBtn) submitBtn.disabled = true;
         numpadBtns.forEach(b => b.disabled = true);
         if (clearBtn) clearBtn.disabled = true;
         if (deleteBtn) deleteBtn.disabled = true;
       } else {
-        if (banner) banner.classList.add('hidden');
+        // ACTIVE SESSION & NOT YET SUBMITTED -> UNLOCK KEYPAD!
+        if (submittedBanner) submittedBanner.classList.add('hidden');
+        if (pauseBanner) pauseBanner.classList.add('hidden');
         if (container) container.classList.remove('opacity-40', 'pointer-events-none');
         if (submitBtn) submitBtn.disabled = false;
         numpadBtns.forEach(b => b.disabled = false);
@@ -995,6 +1037,9 @@
       }
     }
 
+    /* =========================================================================
+       9. NUMPAD & INPUT SLOTS CONTROL
+       ========================================================================= */
     function renderDigitSlots() {
       const container = document.getElementById('digit-slots-container');
       container.innerHTML = '';
@@ -1011,10 +1056,9 @@
     }
 
     function pressNumpad(num) {
-      if (!isSessionActive) return; // STRICT GUARD WHEN PAUSED/0S
+      if (!isSessionActive || hasSubmittedThisSession) return;
       document.getElementById('keypad-error-msg').innerText = '';
 
-      // Check duplicate
       if (currentInputDigits.includes(num)) {
         playSound('tick');
         document.getElementById('keypad-error-msg').innerText = 'Angka harus unik! (Tidak boleh ada angka kembar)';
@@ -1029,7 +1073,7 @@
     }
 
     function deleteNumpad() {
-      if (!isSessionActive) return;
+      if (!isSessionActive || hasSubmittedThisSession) return;
       if (currentInputDigits.length > 0) {
         playSound('click');
         currentInputDigits.pop();
@@ -1039,7 +1083,7 @@
     }
 
     function clearNumpad() {
-      if (!isSessionActive) return;
+      if (!isSessionActive || hasSubmittedThisSession) return;
       playSound('click');
       currentInputDigits = [];
       document.getElementById('keypad-error-msg').innerText = '';
@@ -1047,7 +1091,7 @@
     }
 
     function updateNumpadDisabledState() {
-      if (!isSessionActive) return;
+      if (!isSessionActive || hasSubmittedThisSession) return;
       const buttons = document.querySelectorAll('.numpad-btn');
       buttons.forEach(btn => {
         const val = btn.innerText.trim();
@@ -1067,6 +1111,11 @@
         return;
       }
 
+      if (hasSubmittedThisSession) {
+        alert('Anda sudah mengirim tebakan untuk sesi ini (Maksimal 1x per sesi). Tunggu sesi berikutnya!');
+        return;
+      }
+
       if (currentInputDigits.length < selectedDigitMode) {
         playSound('tick');
         document.getElementById('keypad-error-msg').innerText = `Lengkapi ${selectedDigitMode} digit angka tebakan!`;
@@ -1080,19 +1129,22 @@
 
       playSound('success');
 
-      // Save guess to Firebase
+      // Save guess with currentSessionNumber to Firebase
       db.ref(`rooms/${currentRoomPin}/guesses`).push({
         playerId: localPlayerId,
         nickname: localPlayerNickname,
         guess: guessStr,
         posisiBenar: result.posisiBenar,
         angkaBenar: result.angkaBenar,
+        sessionNumber: currentSessionNumber,
         timestamp: firebase.database.ServerValue.TIMESTAMP
       });
 
-      // Clear input
+      // Clear input & Lock Keypad for this session
       currentInputDigits = [];
+      hasSubmittedThisSession = true;
       renderDigitSlots();
+      updatePlayerKeypadUI();
       document.getElementById('keypad-error-msg').innerText = '';
     }
 
@@ -1104,7 +1156,6 @@
         const guessesObj = snapshot.val() || {};
         const myGuesses = Object.values(guessesObj).filter(g => g.playerId === localPlayerId);
 
-        // Sort chronological ascending to calculate correct trial numbers (#1, #2, #3)
         myGuesses.sort((a, b) => a.timestamp - b.timestamp);
 
         document.getElementById('my-guess-count').innerText = myGuesses.length + ' kali';
@@ -1118,15 +1169,12 @@
           return;
         }
 
-        // Render table rows (newest on top)
         const reversedGuesses = [...myGuesses].reverse();
 
         tbody.innerHTML = reversedGuesses.map((g) => {
-          // Find chronological guess number
-          const originalIndex = myGuesses.indexOf(g) + 1;
           return `
             <tr class="border-b border-white/5 hover:bg-white/5 transition animate-slide-in">
-              <td class="py-2 px-2 text-slate-400 font-normal">#${originalIndex}</td>
+              <td class="py-2 px-2 text-cyan-400 font-bold">#${g.sessionNumber || 1}</td>
               <td class="py-2 px-3 text-amber-300 text-sm font-black tracking-widest fredoka text-left">${g.guess}</td>
               <td class="py-2 px-2">
                 <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold">
@@ -1141,9 +1189,12 @@
             </tr>
           `;
         }).join('');
+
+        // Update submitted status for current session
+        hasSubmittedThisSession = myGuesses.some(g => g.sessionNumber === currentSessionNumber);
+        updatePlayerKeypadUI();
       });
     }
-
 
     /* =========================================================================
        11. WINNER & CELEBRATION
@@ -1155,7 +1206,6 @@
       document.getElementById('winner-name-display').innerText = winnerNickname;
       document.getElementById('revealed-secret-code').innerText = (secretCode || currentSecretCode).split('').join(' ');
 
-      // Trigger Confetti
       try {
         confetti({
           particleCount: 120,
@@ -1172,7 +1222,6 @@
       return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    // Auto-fill PIN from URL query string if present
     window.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
       const pinParam = urlParams.get('pin');
