@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bulls & Cows Multiplayer - Kahoot! Firebase Edition</title>
+  <title>Posisi & Angka - Game Tembak Angka LKMM-TD</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -112,20 +112,34 @@
 
   <!-- Firebase Modular SDK v11.6.1 -->
   <script type="module">
-    import { initializeApp, getApps, deleteApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getDatabase, ref, set, get, onValue, push, child, update, remove, off, onDisconnect } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getDatabase, ref, set, get, onValue, push, update, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+    // Hardcoded Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCYJ0DVl3_C0otcUYJ7h38rRXGB_M5eN2g",
+      authDomain: "icebreaking-57186.firebaseapp.com",
+      databaseURL: "https://icebreaking-57186-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "icebreaking-57186",
+      storageBucket: "icebreaking-57186.firebasestorage.app",
+      messagingSenderId: "655694735332",
+      appId: "1:655694735332:web:b4d1229058e591574bc9f1",
+      measurementId: "G-Q5X5RREJTZ"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
     // Attach to global window object for app logic
     window.FB = {
-      initializeApp, getApps, deleteApp,
-      getDatabase, ref, set, get, onValue, push, child, update, remove, off, onDisconnect,
-      app: null,
-      db: null
+      initializeApp, getDatabase, ref, set, get, onValue, push, update, remove, onDisconnect,
+      app: app,
+      db: db
     };
 
-    // Auto-initialize on DOM load if config exists in localStorage
     window.addEventListener('DOMContentLoaded', () => {
-      initFirebaseFromStorage();
+      console.log("Firebase Realtime Database connected successfully.");
     });
   </script>
 </head>
@@ -137,23 +151,18 @@
       <div class="flex items-center gap-3">
         <div class="bg-kahoot-purple p-2 rounded-xl border-2 border-purple-400/30">
           <i class="fa-solid fa-bullseye text-amber-400 text-xl me-1"></i>
-          <span class="font-fredoka font-bold text-lg tracking-wide bg-gradient-to-r from-amber-300 to-yellow-500 bg-clip-text text-transparent">BULLS & COWS</span>
+          <span class="font-fredoka font-bold text-lg tracking-wide bg-gradient-to-r from-amber-300 to-yellow-500 bg-clip-text text-transparent">POSISI & ANGKA</span>
         </div>
         
         <!-- Firebase Status Indicator -->
-        <div id="firebase-status-badge" onclick="openFirebaseConfigModal()" class="cursor-pointer bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-300 text-xs px-3 py-1.5 rounded-full flex items-center gap-2 transition">
-          <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
-          <span id="firebase-status-text" class="font-semibold">Firebase Belum Dikonfigurasi</span>
-          <i class="fa-solid fa-gear text-xs"></i>
+        <div class="bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs px-3 py-1.5 rounded-full flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="font-semibold">Terhubung ke Server</span>
         </div>
       </div>
 
       <!-- Quick Controls -->
       <div class="flex items-center gap-2">
-        <button onclick="openFirebaseConfigModal()" class="text-xs bg-white/10 hover:bg-white/20 text-white font-semibold py-1.5 px-3 rounded-lg border border-white/20 transition flex items-center gap-1.5">
-          <i class="fa-solid fa-sliders text-amber-400"></i>
-          <span class="hidden sm:inline">Set Setting Firebase</span>
-        </button>
         <button id="btn-switch-role" onclick="resetRoleSelection()" class="text-xs bg-white/10 hover:bg-white/20 text-white font-semibold py-1.5 px-3 rounded-lg border border-white/20 transition flex items-center gap-1.5">
           <i class="fa-solid fa-arrows-rotate"></i>
           <span id="role-badge">Pilih Peran</span>
@@ -174,7 +183,7 @@
       </div>
       <h1 class="font-fredoka text-3xl sm:text-5xl font-bold mb-3 tracking-wide">Pilih Peran Permainan</h1>
       <p class="text-purple-200 text-sm sm:text-base mb-8 max-w-lg mx-auto">
-        Tampilkan layar <span class="text-amber-300 font-bold">Host Proyektor</span> di laptop/layar utama dan minta seluruh peserta bergabung via <span class="text-cyan-300 font-bold">HP Peserta</span> menggunakan PIN Game.
+        Tampilkan layar <span class="text-amber-300 font-bold">Host Proyektor</span> di layar utama dan minta seluruh peserta bergabung via <span class="text-cyan-300 font-bold">HP Peserta</span> menggunakan Game PIN.
       </p>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -219,6 +228,19 @@
           </button>
         </div>
 
+        <!-- Mode Digits Selection (3 Digit vs 4 Digit) -->
+        <div class="mb-6 bg-purple-950/70 border border-purple-400/30 rounded-2xl p-4 max-w-md mx-auto text-center">
+          <span class="text-xs font-bold text-purple-200 uppercase tracking-widest block mb-3">PILIH MODE DIGIT ANGKA:</span>
+          <div class="grid grid-cols-2 gap-3">
+            <button id="btn-mode-3" onclick="setDigitModeHost(3)" class="btn-kahoot py-3 rounded-xl font-fredoka text-lg font-bold border-2 transition bg-amber-500/20 text-amber-300 border-amber-400">
+              <i class="fa-solid fa-3 me-1"></i> 3 Digit Angka
+            </button>
+            <button id="btn-mode-4" onclick="setDigitModeHost(4)" class="btn-kahoot py-3 rounded-xl font-fredoka text-lg font-bold border-2 transition bg-white/5 text-gray-400 border-white/10 hover:border-white/30">
+              <i class="fa-solid fa-4 me-1"></i> 4 Digit Angka
+            </button>
+          </div>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
           <!-- PIN Display -->
           <div class="md:col-span-2 bg-gradient-to-br from-purple-900/80 to-indigo-900/80 border-2 border-purple-400/40 rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-center shadow-inner">
@@ -227,7 +249,7 @@
               ------
             </div>
             <p class="text-xs text-purple-300 mt-2">
-              Peserta membuka web ini di HP dan memasukkan PIN di atas!
+              Peserta memasukkan PIN ini di browser HP masing-masing!
             </p>
           </div>
 
@@ -287,7 +309,7 @@
               <div class="text-xs text-purple-300">STATUS PERMAINAN</div>
               <div class="font-fredoka text-xl font-bold text-emerald-400 flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-                Sesi <span id="dash-session-num">1</span> Sedang Berjalan
+                Sesi <span id="dash-session-num">1</span> Sedang Berjalan (<span id="dash-digit-badge" class="text-amber-300 font-bold">4 Digit</span>)
               </div>
             </div>
           </div>
@@ -315,7 +337,7 @@
         <!-- Live Feed & Stats Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          <!-- Live Feed Tebakan (FIFO Max 15 Rows) -->
+          <!-- Live Feed Tebakan (FIFO Max 10 Rows) -->
           <div class="lg:col-span-2 bg-white/5 border border-white/10 backdrop-blur-xl rounded-3xl p-6 shadow-xl">
             <div class="flex justify-between items-center mb-4">
               <div>
@@ -323,10 +345,10 @@
                   <i class="fa-solid fa-stream text-amber-400"></i>
                   Feed Live Tebakan Peserta
                 </h3>
-                <p class="text-xs text-purple-300">Menampilkan maks. 15 tebakan terbaru (Urut Terawal ke Terakhir)</p>
+                <p class="text-xs text-purple-300">Menampilkan maks. 10 tebakan terbaru (Bergeser otomatis jika tebakan ke-11 masuk)</p>
               </div>
               <span class="text-xs bg-white/10 px-3 py-1 rounded-full text-purple-200">
-                Total Feed: <span id="feed-count" class="font-bold text-amber-300">0</span>/15
+                Total Feed: <span id="feed-count" class="font-bold text-amber-300">0</span>/10
               </span>
             </div>
 
@@ -370,7 +392,7 @@
         </div>
         
         <h2 class="font-fredoka text-4xl sm:text-6xl font-extrabold text-amber-300 mb-2">PERMAINAN SELESAI!</h2>
-        <p id="winner-subtitle" class="text-purple-200 text-lg mb-6">Pemenang dengan 4 Bulls Telah Ditemukan!</p>
+        <p id="winner-subtitle" class="text-purple-200 text-lg mb-6">Pemenang dengan Posisi Benar Sempurna Telah Ditemukan!</p>
 
         <!-- Winner Nickname Badge -->
         <div class="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 p-1 rounded-3xl max-w-md mx-auto shadow-2xl my-6">
@@ -463,12 +485,14 @@
           </div>
         </div>
 
-        <!-- Input Box 4 Unique Digits -->
+        <!-- Input Box 3 or 4 Unique Digits -->
         <div class="bg-white/5 border border-white/10 backdrop-blur-xl rounded-3xl p-5 shadow-xl text-center">
-          <span class="text-xs font-bold text-purple-200 uppercase tracking-wider block mb-3">TEBAK 4 DIGIT ANGKA UNIK</span>
+          <span id="player-digit-title" class="text-xs font-bold text-purple-200 uppercase tracking-wider block mb-3">
+            TEBAK 4 DIGIT ANGKA UNIK
+          </span>
           
-          <!-- 4 Slot Displays -->
-          <div class="flex justify-center gap-2 mb-4">
+          <!-- Dynamic Slot Displays -->
+          <div id="digit-slots-container" class="flex justify-center gap-2 mb-4">
             <div id="digit-0" class="w-12 h-14 bg-black/50 border-2 border-white/20 rounded-xl flex items-center justify-center font-fredoka text-3xl text-amber-300"></div>
             <div id="digit-1" class="w-12 h-14 bg-black/50 border-2 border-white/20 rounded-xl flex items-center justify-center font-fredoka text-3xl text-amber-300"></div>
             <div id="digit-2" class="w-12 h-14 bg-black/50 border-2 border-white/20 rounded-xl flex items-center justify-center font-fredoka text-3xl text-amber-300"></div>
@@ -602,7 +626,7 @@
 
   <!-- Footer -->
   <footer class="text-center py-3 text-xs text-purple-300/60 border-t border-white/5 bg-black/20">
-    Bulls and Cows Web App &copy; 2026 • Firebase Realtime Sync • Dirancang untuk LKMM-TD
+    Posisi & Angka Web App &copy; 2026 • Firebase Realtime Sync • LKMM-TD
   </footer>
 
   <!-- ================================================================= -->
@@ -677,11 +701,12 @@
     // Host State
     let hostState = {
       pin: '',
+      digitMode: 4, // 3 or 4
       secretCode: '',
       isSecretVisible: false,
       status: 'IDLE',
       players: {},
-      liveFeed: [],
+      liveFeed: [], // Max 10 items
       sessionNum: 1,
       timeLeft: 15,
       timerInterval: null,
@@ -694,96 +719,14 @@
       pin: '',
       nickname: '',
       playerId: 'player_' + Math.random().toString(36).substr(2, 9),
+      digitMode: 4, // 3 or 4
       currentDigits: [],
       hasSubmittedThisSession: false,
       history: [],
       unsubs: []
     };
 
-    // --- FIREBASE MANAGEMENT ---
-    function initFirebaseFromStorage() {
-      const savedConfigStr = localStorage.getItem('bulls_cows_firebase_config');
-      const badgeText = document.getElementById('firebase-status-text');
-      const badge = document.getElementById('firebase-status-badge');
-
-      if (!savedConfigStr) {
-        badgeText.innerText = "Firebase Belum Dikonfigurasi";
-        badge.className = "cursor-pointer bg-red-500/20 border border-red-500/40 text-red-300 text-xs px-3 py-1.5 rounded-full flex items-center gap-2 transition";
-        openFirebaseConfigModal();
-        return false;
-      }
-
-      try {
-        const config = JSON.parse(savedConfigStr);
-        if (window.FB.app) {
-          window.FB.deleteApp(window.FB.app);
-        }
-        window.FB.app = window.FB.initializeApp(config);
-        window.FB.db = window.FB.getDatabase(window.FB.app);
-
-        badgeText.innerText = "Firebase Terhubung ✓";
-        badge.className = "cursor-pointer bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs px-3 py-1.5 rounded-full flex items-center gap-2 transition";
-        return true;
-      } catch (err) {
-        console.error("Firebase init error:", err);
-        badgeText.innerText = "Error Koneksi Firebase";
-        badge.className = "cursor-pointer bg-red-500/20 border border-red-500/40 text-red-300 text-xs px-3 py-1.5 rounded-full flex items-center gap-2 transition";
-        return false;
-      }
-    }
-
-    function openFirebaseConfigModal() {
-      playSound('click');
-      const saved = localStorage.getItem('bulls_cows_firebase_config');
-      if (saved) {
-        document.getElementById('firebase-json-input').value = saved;
-      }
-      document.getElementById('config-error-alert').classList.add('hidden');
-      document.getElementById('modal-firebase-config').classList.remove('hidden');
-    }
-
-    function closeFirebaseConfigModal() {
-      playSound('click');
-      document.getElementById('modal-firebase-config').classList.add('hidden');
-    }
-
-    function saveFirebaseConfigFromInput() {
-      playSound('click');
-      const raw = document.getElementById('firebase-json-input').value.trim();
-      const errAlert = document.getElementById('config-error-alert');
-
-      try {
-        // Try parsing JSON
-        const parsed = JSON.parse(raw);
-        if (!parsed.apiKey || !parsed.databaseURL) {
-          errAlert.innerText = "Objek JSON harus memiliki 'apiKey' dan 'databaseURL'!";
-          errAlert.classList.remove('hidden');
-          return;
-        }
-
-        localStorage.setItem('bulls_cows_firebase_config', JSON.stringify(parsed));
-        errAlert.classList.add('hidden');
-        closeFirebaseConfigModal();
-
-        if (initFirebaseFromStorage()) {
-          alertCustom("Konfigurasi Firebase Berhasil Disimpan & Terhubung!");
-        }
-      } catch (e) {
-        errAlert.innerText = "JSON Syntax Error! Pastikan format JSON valid.";
-        errAlert.classList.remove('hidden');
-      }
-    }
-
-    function clearFirebaseConfig() {
-      playSound('click');
-      localStorage.removeItem('bulls_cows_firebase_config');
-      document.getElementById('firebase-json-input').value = '';
-      initFirebaseFromStorage();
-      closeFirebaseConfigModal();
-    }
-
     function alertCustom(msg) {
-      // Inline message box replacing alert()
       const box = document.createElement('div');
       box.className = 'fixed bottom-5 right-5 bg-slate-900 border border-emerald-500 text-emerald-300 font-bold px-5 py-3 rounded-2xl shadow-2xl z-50 text-sm flex items-center gap-2 animate-bounce';
       box.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i> ${msg}`;
@@ -791,34 +734,41 @@
       setTimeout(() => box.remove(), 3500);
     }
 
-    // --- LOGIC: BULLS AND COWS MATH ---
-    function generateSecretCode() {
+    // --- LOGIC: GAME MATH & EVALUATION ---
+    function generateSecretCode(len = 4) {
       const digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
       digits.sort(() => Math.random() - 0.5);
-      return digits.slice(0, 4).join('');
+      return digits.slice(0, len).join('');
     }
 
     function generateGamePin() {
       return Math.floor(100000 + Math.random() * 900000).toString();
     }
 
+    /**
+     * Evaluasi Tebakan:
+     * 1. Posisi Benar = jumlah digit yang berada di indeks yang tepat.
+     * 2. Angka Benar = total digit tebakan yang ada di dalam kode rahasia.
+     */
     function evaluateGuess(secret, guess) {
-      let bulls = 0;
-      let cows = 0;
-      for (let i = 0; i < 4; i++) {
+      let posisiBenar = 0;
+      let angkaBenar = 0;
+
+      for (let i = 0; i < guess.length; i++) {
         if (guess[i] === secret[i]) {
-          bulls++;
-        } else if (secret.includes(guess[i])) {
-          cows++;
+          posisiBenar++;
+        }
+        if (secret.includes(guess[i])) {
+          angkaBenar++;
         }
       }
-      return { bulls, cows };
+      return { posisiBenar, angkaBenar };
     }
 
     // --- ROLE & NAVIGATION ---
     function selectRole(role) {
-      if (!window.FB.db) {
-        openFirebaseConfigModal();
+      if (!window.FB || !window.FB.db) {
+        alert("Koneksi server belum siap, mohon tunggu sebentar.");
         return;
       }
 
@@ -852,20 +802,48 @@
     }
 
     // ==========================================
-    // HOST ENGINE (FIREBASE SYNCHRONIZED)
+    // HOST ENGINE
     // ==========================================
     function clearHostSubscriptions() {
       hostState.unsubs.forEach(unsub => unsub());
       hostState.unsubs = [];
     }
 
+    function setDigitModeHost(mode) {
+      playSound('click');
+      hostState.digitMode = mode;
+      
+      const btn3 = document.getElementById('btn-mode-3');
+      const btn4 = document.getElementById('btn-mode-4');
+
+      if (mode === 3) {
+        btn3.className = 'btn-kahoot py-3 rounded-xl font-fredoka text-lg font-bold border-2 transition bg-amber-500/20 text-amber-300 border-amber-400';
+        btn4.className = 'btn-kahoot py-3 rounded-xl font-fredoka text-lg font-bold border-2 transition bg-white/5 text-gray-400 border-white/10 hover:border-white/30';
+      } else {
+        btn4.className = 'btn-kahoot py-3 rounded-xl font-fredoka text-lg font-bold border-2 transition bg-amber-500/20 text-amber-300 border-amber-400';
+        btn3.className = 'btn-kahoot py-3 rounded-xl font-fredoka text-lg font-bold border-2 transition bg-white/5 text-gray-400 border-white/10 hover:border-white/30';
+      }
+
+      // Re-generate secret code with new length
+      if (hostState.pin) {
+        hostState.secretCode = generateSecretCode(hostState.digitMode);
+        document.getElementById('host-secret-display').innerText = hostState.isSecretVisible ? hostState.secretCode : '?'.repeat(hostState.digitMode);
+        
+        // Update in Firebase
+        window.FB.update(window.FB.ref(window.FB.db, 'rooms/' + hostState.pin), {
+          digitMode: hostState.digitMode,
+          secretCode: hostState.secretCode
+        });
+      }
+    }
+
     function createNewGameHost() {
-      if (!window.FB.db) return;
+      if (!window.FB || !window.FB.db) return;
       clearHostSubscriptions();
       if (hostState.timerInterval) clearInterval(hostState.timerInterval);
 
       hostState.pin = generateGamePin();
-      hostState.secretCode = generateSecretCode();
+      hostState.secretCode = generateSecretCode(hostState.digitMode);
       hostState.isSecretVisible = false;
       hostState.status = 'LOBBY';
       hostState.players = {};
@@ -876,7 +854,7 @@
 
       // Update Host Lobby UI
       document.getElementById('host-pin-display').innerText = hostState.pin;
-      document.getElementById('host-secret-display').innerText = '****';
+      document.getElementById('host-secret-display').innerText = '?'.repeat(hostState.digitMode);
       document.getElementById('lobby-count').innerText = '0';
       document.getElementById('lobby-player-list').innerHTML = `
         <div class="w-full text-center text-gray-500 py-8 text-sm italic">
@@ -893,6 +871,7 @@
       const roomRef = window.FB.ref(window.FB.db, 'rooms/' + hostState.pin);
       window.FB.set(roomRef, {
         pin: hostState.pin,
+        digitMode: hostState.digitMode,
         secretCode: hostState.secretCode,
         status: 'LOBBY',
         sessionNum: 1,
@@ -911,15 +890,15 @@
       });
       hostState.unsubs.push(unsubPlayers);
 
-      // Listen to Guesses Submitted via Firebase
+      // Listen to Guesses Submitted via Firebase (FIFO Shift Feed max 10 rows)
       const guessesRef = window.FB.ref(window.FB.db, `rooms/${hostState.pin}/guesses`);
       const unsubGuesses = window.FB.onValue(guessesRef, (snapshot) => {
         const data = snapshot.val() || {};
         const list = Object.values(data);
         
-        // Sort chronologically (newest first) and take last 15
+        // Sort chronologically (newest first) and limit to max 10 rows
         list.sort((a, b) => b.timestamp - a.timestamp);
-        hostState.liveFeed = list.slice(0, 15);
+        hostState.liveFeed = list.slice(0, 10);
 
         renderLiveFeedHost();
       });
@@ -929,8 +908,9 @@
     function toggleSecretVisibilityHost() {
       playSound('click');
       hostState.isSecretVisible = !hostState.isSecretVisible;
-      document.getElementById('host-secret-display').innerText = hostState.isSecretVisible ? hostState.secretCode : '****';
-      document.getElementById('dash-secret-code-bottom').innerText = hostState.isSecretVisible ? hostState.secretCode : '****';
+      const mask = '?'.repeat(hostState.digitMode);
+      document.getElementById('host-secret-display').innerText = hostState.isSecretVisible ? hostState.secretCode : mask;
+      document.getElementById('dash-secret-code-bottom').innerText = hostState.isSecretVisible ? hostState.secretCode : mask;
     }
 
     function startGameHost() {
@@ -955,7 +935,8 @@
 
       document.getElementById('dash-pin').innerText = hostState.pin;
       document.getElementById('dash-session-num').innerText = hostState.sessionNum;
-      document.getElementById('dash-secret-code-bottom').innerText = hostState.isSecretVisible ? hostState.secretCode : '****';
+      document.getElementById('dash-digit-badge').innerText = `${hostState.digitMode} Digit`;
+      document.getElementById('dash-secret-code-bottom').innerText = hostState.isSecretVisible ? hostState.secretCode : '?'.repeat(hostState.digitMode);
 
       startSessionTimerHost();
     }
@@ -970,8 +951,7 @@
         hostState.timeLeft--;
         updateTimerUIHost(hostState.timeLeft);
 
-        // Sync Time to Firebase
-        if (window.FB.db && hostState.pin) {
+        if (window.FB && window.FB.db && hostState.pin) {
           window.FB.update(window.FB.ref(window.FB.db, 'rooms/' + hostState.pin), {
             timeLeft: hostState.timeLeft
           });
@@ -1001,7 +981,6 @@
       hostState.sessionNum++;
       document.getElementById('dash-session-num').innerText = hostState.sessionNum;
 
-      // Update Firebase
       window.FB.update(window.FB.ref(window.FB.db, 'rooms/' + hostState.pin), {
         sessionNum: hostState.sessionNum,
         timeLeft: 15
@@ -1068,11 +1047,11 @@
               </div>
               
               <div class="flex gap-1">
-                <span class="bg-red-600/80 border border-red-400/50 text-white font-bold text-xs px-2.5 py-1 rounded-lg flex items-center gap-1">
-                  🎯 ${item.bulls} Bull
+                <span class="bg-emerald-600/80 border border-emerald-400/50 text-white font-bold text-xs px-2.5 py-1 rounded-lg flex items-center gap-1">
+                  🎯 ${item.posisiBenar} Posisi Benar
                 </span>
-                <span class="bg-cyan-600/80 border border-cyan-400/50 text-white font-bold text-xs px-2.5 py-1 rounded-lg flex items-center gap-1">
-                  🐄 ${item.cows} Cow
+                <span class="bg-blue-600/80 border border-blue-400/50 text-white font-bold text-xs px-2.5 py-1 rounded-lg flex items-center gap-1">
+                  🔢 ${item.angkaBenar} Angka Benar
                 </span>
               </div>
             </div>
@@ -1103,35 +1082,12 @@
       `).join('');
     }
 
-    function triggerWinnerHost(winnerName) {
-      if (hostState.timerInterval) clearInterval(hostState.timerInterval);
-
-      hostState.status = 'FINISHED';
-      hostState.winner = winnerName;
-
-      // Update Firebase
-      window.FB.update(window.FB.ref(window.FB.db, 'rooms/' + hostState.pin), {
-        status: 'FINISHED',
-        winner: winnerName
-      });
-
-      playSound('win');
-      confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
-
-      document.getElementById('host-dashboard').classList.add('hidden');
-      document.getElementById('host-winner-modal').classList.remove('hidden');
-
-      document.getElementById('winner-name').innerText = winnerName;
-      document.getElementById('winner-secret-code').innerText = hostState.secretCode;
-    }
-
     function endGameManualHost() {
       playSound('click');
       if (hostState.timerInterval) clearInterval(hostState.timerInterval);
 
       hostState.status = 'FINISHED';
 
-      // Update Firebase
       window.FB.update(window.FB.ref(window.FB.db, 'rooms/' + hostState.pin), {
         status: 'FINISHED',
         winner: null
@@ -1146,7 +1102,7 @@
     }
 
     // ==========================================
-    // PLAYER ENGINE (FIREBASE SYNCHRONIZED)
+    // PLAYER ENGINE
     // ==========================================
     function clearPlayerSubscriptions() {
       playerState.unsubs.forEach(unsub => unsub());
@@ -1164,8 +1120,8 @@
       e.preventDefault();
       playSound('click');
 
-      if (!window.FB.db) {
-        openFirebaseConfigModal();
+      if (!window.FB || !window.FB.db) {
+        alert("Koneksi server belum siap, mohon tunggu sebentar.");
         return;
       }
 
@@ -1174,7 +1130,6 @@
 
       if (!pinInput || !nickInput) return;
 
-      // Check Room existence in Firebase
       const roomSnapshot = await window.FB.get(window.FB.ref(window.FB.db, 'rooms/' + pinInput));
       if (!roomSnapshot.exists()) {
         showPlayerError('PIN Game tidak ditemukan!');
@@ -1184,13 +1139,14 @@
       const roomData = roomSnapshot.val();
       playerState.pin = pinInput;
       playerState.nickname = nickInput;
+      playerState.digitMode = roomData.digitMode || 4;
       playerState.history = [];
       playerState.currentDigits = [];
 
       document.getElementById('player-nick-display').innerText = nickInput;
       document.getElementById('player-game-nick').innerText = nickInput;
 
-      // Register player in Firebase Room
+      // Register player
       const playerRef = window.FB.ref(window.FB.db, `rooms/${pinInput}/players/${playerState.playerId}`);
       window.FB.set(playerRef, {
         id: playerState.playerId,
@@ -1198,12 +1154,11 @@
         joinedAt: Date.now()
       });
 
-      // Cleanup on disconnect
       window.FB.onDisconnect(playerRef).remove();
 
       showPlayerScreen('player-waiting');
 
-      // Listen to Room Changes via Firebase
+      // Listen to Room Changes
       clearPlayerSubscriptions();
       const roomRef = window.FB.ref(window.FB.db, 'rooms/' + pinInput);
       let lastSessionNum = 1;
@@ -1211,6 +1166,10 @@
       const unsubRoom = window.FB.onValue(roomRef, (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
+
+        // Sync Digit Mode
+        playerState.digitMode = data.digitMode || 4;
+        setupPlayerDigitSlotsUI();
 
         // Session update
         if (data.sessionNum !== lastSessionNum) {
@@ -1232,14 +1191,14 @@
           showPlayerScreen('player-gameplay');
         } else if (data.status === 'FINISHED') {
           showPlayerScreen('player-end-screen');
-          document.getElementById('player-end-secret').innerText = data.secretCode || '----';
+          document.getElementById('player-end-secret').innerText = data.secretCode || '-'.repeat(playerState.digitMode);
 
           if (data.winner === playerState.nickname) {
             playSound('win');
-            confetti({ particleCount: 100, spread: 70 });
+            confetti({ particleCount: 120, spread: 80 });
             document.getElementById('player-end-icon').innerText = '🎉🏆';
             document.getElementById('player-end-title').innerText = 'KAMU MENANG!';
-            document.getElementById('player-end-msg').innerText = 'Selamat! Tebakanmu berhasil menemukan 4 Bulls!';
+            document.getElementById('player-end-msg').innerText = `Selamat! Tebakanmu berhasil menemukan ${playerState.digitMode} Posisi Benar!`;
           } else {
             document.getElementById('player-end-icon').innerText = '🏁';
             document.getElementById('player-end-title').innerText = 'Game Selesai!';
@@ -1249,6 +1208,19 @@
       });
 
       playerState.unsubs.push(unsubRoom);
+    }
+
+    function setupPlayerDigitSlotsUI() {
+      const title = document.getElementById('player-digit-title');
+      const digit3Slot = document.getElementById('digit-3');
+
+      title.innerText = `TEBAK ${playerState.digitMode} DIGIT ANGKA UNIK`;
+
+      if (playerState.digitMode === 3) {
+        digit3Slot.classList.add('hidden');
+      } else {
+        digit3Slot.classList.remove('hidden');
+      }
     }
 
     function leavePlayerGame() {
@@ -1267,13 +1239,12 @@
       }
     }
 
-    // Touch Numpad UX for Player
+    // Touch Numpad
     function pressNumpad(numStr) {
       playSound('click');
       if (playerState.hasSubmittedThisSession) return;
-      if (playerState.currentDigits.length >= 4) return;
+      if (playerState.currentDigits.length >= playerState.digitMode) return;
 
-      // Check duplicates
       if (playerState.currentDigits.includes(numStr)) {
         showPlayerError('Angka tidak boleh kembar!');
         return;
@@ -1300,9 +1271,9 @@
     }
 
     function updateDigitSlotsUI() {
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < playerState.digitMode; i++) {
         const slot = document.getElementById(`digit-${i}`);
-        slot.innerText = playerState.currentDigits[i] || '';
+        if (slot) slot.innerText = playerState.currentDigits[i] || '';
       }
     }
 
@@ -1317,8 +1288,8 @@
     }
 
     async function submitGuessPlayer() {
-      if (playerState.currentDigits.length !== 4) {
-        showPlayerError('Masukkan 4 digit angka unik terlebih dahulu!');
+      if (playerState.currentDigits.length !== playerState.digitMode) {
+        showPlayerError(`Masukkan ${playerState.digitMode} digit angka unik terlebih dahulu!`);
         return;
       }
 
@@ -1329,21 +1300,21 @@
 
       const guessStr = playerState.currentDigits.join('');
 
-      // Fetch room secret code to evaluate locally & push result
+      // Fetch room secret code
       const roomSnapshot = await window.FB.get(window.FB.ref(window.FB.db, 'rooms/' + playerState.pin));
       if (!roomSnapshot.exists()) return;
 
       const roomData = roomSnapshot.val();
       const evaluation = evaluateGuess(roomData.secretCode, guessStr);
 
-      // Push guess to Firebase
+      // Push guess
       const guessesRef = window.FB.ref(window.FB.db, `rooms/${playerState.pin}/guesses`);
       window.FB.push(guessesRef, {
         playerId: playerState.playerId,
         nickname: playerState.nickname,
         guess: guessStr,
-        bulls: evaluation.bulls,
-        cows: evaluation.cows,
+        posisiBenar: evaluation.posisiBenar,
+        angkaBenar: evaluation.angkaBenar,
         sessionNum: roomData.sessionNum || 1,
         timestamp: Date.now()
       });
@@ -1351,15 +1322,14 @@
       // Private local history
       playerState.history.unshift({
         guess: guessStr,
-        bulls: evaluation.bulls,
-        cows: evaluation.cows,
+        posisiBenar: evaluation.posisiBenar,
+        angkaBenar: evaluation.angkaBenar,
         sessionNum: roomData.sessionNum || 1
       });
       renderPlayerHistory();
 
-      // Check if won
-      if (evaluation.bulls === 4) {
-        // Trigger winner in Firebase
+      // Check victory
+      if (evaluation.posisiBenar === playerState.digitMode) {
         window.FB.update(window.FB.ref(window.FB.db, 'rooms/' + playerState.pin), {
           status: 'FINISHED',
           winner: playerState.nickname
@@ -1388,11 +1358,11 @@
             ${item.guess}
           </div>
           <div class="flex gap-1.5">
-            <span class="bg-red-500/30 text-red-300 border border-red-500/40 font-bold px-2 py-0.5 rounded-md">
-              🎯 ${item.bulls} Bull
+            <span class="bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 font-bold px-2 py-0.5 rounded-md">
+              🎯 ${item.posisiBenar} Posisi Benar
             </span>
-            <span class="bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 font-bold px-2 py-0.5 rounded-md">
-              🐄 ${item.cows} Cow
+            <span class="bg-blue-500/30 text-blue-300 border border-blue-500/40 font-bold px-2 py-0.5 rounded-md">
+              🔢 ${item.angkaBenar} Angka Benar
             </span>
           </div>
         </div>
