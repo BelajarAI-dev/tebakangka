@@ -62,7 +62,7 @@
     .btn-kahoot {
       transition: transform 0.1s ease, box-shadow 0.1s ease;
     }
-    .btn-kahoot:active {
+    .btn-kahoot:active:not(:disabled) {
       transform: translateY(3px) !important;
       box-shadow: none !important;
     }
@@ -196,13 +196,13 @@
           <button id="btn-mode-3" onclick="selectDigitMode(3)" class="py-4 px-4 rounded-2xl border-4 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 flex flex-col items-center gap-1 transition">
             <span class="text-3xl">3️⃣</span>
             <span class="text-lg">3 DIGIT</span>
-            <span class="text-[10px] opacity-80">Angka 000 - 999</span>
+            <span class="text-[10px] opacity-80">3 Angka Unik</span>
           </button>
 
           <button id="btn-mode-4" onclick="selectDigitMode(4)" class="py-4 px-4 rounded-2xl border-4 border-slate-600 bg-slate-700/40 font-bold fredoka text-slate-400 flex flex-col items-center gap-1 transition">
             <span class="text-3xl">4️⃣</span>
             <span class="text-lg">4 DIGIT</span>
-            <span class="text-[10px] opacity-80">Angka 0000 - 9999</span>
+            <span class="text-[10px] opacity-80">4 Angka Unik</span>
           </button>
         </div>
 
@@ -223,7 +223,7 @@
                 ------
               </div>
               <p class="text-xs sm:text-sm text-slate-300">
-                Mode: <span id="display-digit-mode-badge" class="font-bold text-cyan-400">4 Digit</span> | Buka di HP: <span class="font-bold text-white underline">Vercel Web App</span>
+                Mode: <span id="display-digit-mode-badge" class="font-bold text-cyan-400">4 Digit</span>
               </p>
             </div>
 
@@ -267,7 +267,7 @@
       <div class="w-full bg-slate-900/90 border-2 border-indigo-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl mb-6 backdrop-blur-xl flex flex-wrap justify-between items-center gap-4">
         
         <div>
-          <span class="text-xs text-slate-400 font-bold uppercase">GAME PIN: <strong id="dash-pin" class="text-amber-400 text-base">482109</strong></span>
+          <span class="text-xs text-slate-400 font-bold uppercase">GAME PIN: <strong id="dash-pin" class="text-amber-400 text-base">------</strong></span>
           <h3 class="text-xl sm:text-2xl font-black fredoka text-white">SESI MONITORING LIVE</h3>
         </div>
 
@@ -375,36 +375,44 @@
     <section id="screen-player-gameplay" class="w-full max-w-md flex flex-col items-center hidden animate-slide-in">
       
       <!-- PLAYER TOP HEADER -->
-      <div class="w-full bg-slate-900/90 border-2 border-cyan-500/40 rounded-2xl p-3 px-4 shadow-xl mb-4 flex justify-between items-center backdrop-blur-md">
+      <div class="w-full bg-slate-900/90 border-2 border-cyan-500/40 rounded-2xl p-3 px-4 shadow-xl mb-3 flex justify-between items-center backdrop-blur-md">
         <div>
           <span class="text-[10px] text-slate-400 font-bold block uppercase">PEMAIN</span>
           <span id="game-player-nickname" class="text-sm font-black text-cyan-300">Budi</span>
         </div>
 
         <div class="flex items-center gap-3">
-          <div class="text-center bg-slate-950 px-3 py-1 rounded-xl border border-amber-400/30">
+          <div id="player-timer-badge" class="text-center bg-slate-950 px-3.5 py-1 rounded-xl border border-amber-400/30">
             <span class="text-[9px] text-slate-400 font-bold block">TIMER</span>
             <span id="player-timer" class="text-lg font-black fredoka text-amber-400">15s</span>
           </div>
         </div>
       </div>
 
+      <!-- SESSION INTERMISSION PAUSE OVERLAY BANNER -->
+      <div id="session-pause-banner" class="w-full bg-gradient-to-r from-amber-600/90 to-rose-600/90 border-2 border-amber-300 rounded-2xl p-3 mb-3 text-center shadow-lg backdrop-blur-md hidden animate-pulse-subtle">
+        <p class="text-sm font-black fredoka text-white flex items-center justify-center gap-2">
+          <i class="fa-solid fa-circle-pause text-amber-200"></i> SESI TERJEDA (0s)
+        </p>
+        <p class="text-[11px] text-amber-100 font-semibold">Menunggu Host menekan "Lanjut Sesi (15s)"...</p>
+      </div>
+
       <!-- INPUT DISPLAY SLOTS -->
-      <div class="w-full bg-slate-900/90 border-4 border-purple-500/40 rounded-3xl p-5 shadow-2xl backdrop-blur-xl mb-4 text-center">
-        <span class="text-xs font-bold text-slate-300 block mb-3 uppercase tracking-wider">
+      <div class="w-full bg-slate-900/90 border-4 border-purple-500/40 rounded-3xl p-4 shadow-2xl backdrop-blur-xl mb-3 text-center">
+        <span class="text-xs font-bold text-slate-300 block mb-2 uppercase tracking-wider">
           MASUKKAN <span id="player-mode-digit-text" class="text-amber-300">4 DIGIT</span> ANGKA UNIK
         </span>
 
         <!-- SLOTS CONTAINER -->
-        <div id="digit-slots-container" class="flex justify-center gap-3 mb-2">
+        <div id="digit-slots-container" class="flex justify-center gap-3 mb-1">
           <!-- Dynamically Generated 3 or 4 Slots -->
         </div>
 
         <p id="keypad-error-msg" class="text-xs text-rose-400 font-bold h-4"></p>
       </div>
 
-      <!-- NUMPAD KEYPAD -->
-      <div class="w-full bg-slate-900/90 border-2 border-white/10 rounded-3xl p-4 shadow-2xl backdrop-blur-xl mb-6">
+      <!-- NUMPAD KEYPAD CONTAINER -->
+      <div id="keypad-container" class="w-full bg-slate-900/90 border-2 border-white/10 rounded-3xl p-4 shadow-2xl backdrop-blur-xl mb-4 relative">
         <div class="grid grid-cols-3 gap-2.5 mb-2.5">
           <button onclick="pressNumpad('1')" class="numpad-btn btn-kahoot py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-2xl font-black fredoka text-white border-b-4 border-slate-950">1</button>
           <button onclick="pressNumpad('2')" class="numpad-btn btn-kahoot py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-2xl font-black fredoka text-white border-b-4 border-slate-950">2</button>
@@ -418,25 +426,39 @@
           <button onclick="pressNumpad('8')" class="numpad-btn btn-kahoot py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-2xl font-black fredoka text-white border-b-4 border-slate-950">8</button>
           <button onclick="pressNumpad('9')" class="numpad-btn btn-kahoot py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-2xl font-black fredoka text-white border-b-4 border-slate-950">9</button>
 
-          <button onclick="clearNumpad()" class="btn-kahoot py-3.5 rounded-2xl bg-rose-900/60 hover:bg-rose-800 text-sm font-bold fredoka text-rose-200 border-b-4 border-rose-950">C</button>
+          <button id="btn-clear" onclick="clearNumpad()" class="btn-kahoot py-3.5 rounded-2xl bg-rose-900/60 hover:bg-rose-800 text-sm font-bold fredoka text-rose-200 border-b-4 border-rose-950">C</button>
           <button onclick="pressNumpad('0')" class="numpad-btn btn-kahoot py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-2xl font-black fredoka text-white border-b-4 border-slate-950">0</button>
-          <button onclick="deleteNumpad()" class="btn-kahoot py-3.5 rounded-2xl bg-amber-900/60 hover:bg-amber-800 text-sm font-bold fredoka text-amber-200 border-b-4 border-amber-950"><i class="fa-solid fa-backspace"></i></button>
+          <button id="btn-delete" onclick="deleteNumpad()" class="btn-kahoot py-3.5 rounded-2xl bg-amber-900/60 hover:bg-amber-800 text-sm font-bold fredoka text-amber-200 border-b-4 border-amber-950"><i class="fa-solid fa-backspace"></i></button>
         </div>
 
-        <button onclick="submitPlayerGuess()" class="btn-kahoot w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 font-black fredoka text-xl text-white shadow-xl border-b-4 border-emerald-800">
+        <button id="btn-submit-guess" onclick="submitPlayerGuess()" class="btn-kahoot w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 font-black fredoka text-xl text-white shadow-xl border-b-4 border-emerald-800">
           KIRIM TEBAKAN <i class="fa-solid fa-paper-plane ml-1"></i>
         </button>
       </div>
 
-      <!-- PRIVATE GUESS HISTORY -->
+      <!-- PRIVATE GUESS HISTORY TABLE -->
       <div class="w-full bg-slate-900/90 border-2 border-white/10 rounded-3xl p-4 shadow-xl backdrop-blur-md">
         <h4 class="text-xs font-bold text-slate-300 mb-3 uppercase tracking-wider flex items-center justify-between">
-          <span><i class="fa-solid fa-history mr-1"></i> Riwayat Tebakan Anda</span>
+          <span><i class="fa-solid fa-clock-rotate-left mr-1 text-cyan-400"></i> Riwayat Tebakan Anda</span>
           <span id="my-guess-count" class="text-amber-400 font-bold">0 kali</span>
         </h4>
 
-        <div id="player-history-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
-          <p class="text-xs text-slate-400 text-center py-4 italic">Belum ada tebakan dikirim.</p>
+        <div class="w-full overflow-hidden rounded-2xl border border-white/10">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-950/80 text-[10px] font-bold text-slate-400 uppercase text-center border-b border-white/10">
+                <th class="py-2 px-2">NO</th>
+                <th class="py-2 px-3 text-left">TEBAKAN</th>
+                <th class="py-2 px-2 text-emerald-400">POSISI BENAR</th>
+                <th class="py-2 px-2 text-cyan-400">ANGKA BENAR</th>
+              </tr>
+            </thead>
+            <tbody id="player-history-tbody" class="text-xs font-bold text-center">
+              <tr>
+                <td colspan="4" class="text-slate-400 text-xs py-4 italic font-normal">Belum ada tebakan dikirim.</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -488,7 +510,7 @@
   <!-- ==================== JAVASCRIPT LOGIC ==================== -->
   <script>
     /* =========================================================================
-       1. FIREBASE CONFIGURATION (HARDCODED)
+       1. FIREBASE CONFIGURATION (EXACT HARDCODED CONFIG)
        ========================================================================= */
     const firebaseConfig = {
       apiKey: "AIzaSyCYJ0DVl3_C0otcUYJ7h38rRXGB_M5eN2g",
@@ -519,6 +541,7 @@
     let currentSecretCode = '';
     let activeTimerInterval = null;
     let currentInputDigits = [];
+    let isSessionActive = true; // Timer > 0 AND session running
     let roomRef = null;
     let guessesRef = null;
 
@@ -628,8 +651,8 @@
       return nums.slice(0, digitsCount).join('');
     }
 
-    // Evaluates Posisi Benar & Angka Benar based on user definition:
-    // Posisi Benar = digit matched in value and exact position
+    // Evaluates Posisi Benar & Angka Benar based on requested definitions:
+    // Posisi Benar = digit matched in value AND exact position
     // Angka Benar = total digits matched in value regardless of position
     function evaluateGuess(secretCode, guess) {
       let posisiBenar = 0;
@@ -689,6 +712,7 @@
         secretCode: currentSecretCode,
         status: 'LOBBY', // LOBBY, PLAYING, FINISHED
         timer: 15,
+        sessionActive: false,
         session: 1,
         createdAt: firebase.database.ServerValue.TIMESTAMP
       });
@@ -734,6 +758,7 @@
       roomRef.update({
         status: 'PLAYING',
         timer: 15,
+        sessionActive: true,
         session: 1
       });
 
@@ -750,16 +775,17 @@
       let timeLeft = 15;
       document.getElementById('dash-timer').innerText = timeLeft + 's';
       
-      roomRef.update({ timer: timeLeft });
+      roomRef.update({ timer: timeLeft, sessionActive: true });
 
       activeTimerInterval = setInterval(() => {
         timeLeft--;
         if (timeLeft >= 0) {
           document.getElementById('dash-timer').innerText = timeLeft + 's';
-          roomRef.update({ timer: timeLeft });
+          roomRef.update({ timer: timeLeft, sessionActive: timeLeft > 0 });
           if (timeLeft <= 5 && timeLeft > 0) playSound('tick');
         } else {
           clearInterval(activeTimerInterval);
+          roomRef.update({ timer: 0, sessionActive: false });
         }
       }, 1000);
     }
@@ -772,8 +798,10 @@
 
     function endHostGameConfirm() {
       if (confirm('Apakah Anda yakin ingin mengakhiri permainan sekarang?')) {
+        if (activeTimerInterval) clearInterval(activeTimerInterval);
         roomRef.update({
           status: 'FINISHED',
+          sessionActive: false,
           winner: {
             nickname: 'Host (Diakhiri)',
             secretCode: currentSecretCode
@@ -833,8 +861,10 @@
         // Check Winner Trigger (Posisi Benar == digitMode)
         const winningGuess = guessesList.find(g => g.posisiBenar === selectedDigitMode);
         if (winningGuess) {
+          if (activeTimerInterval) clearInterval(activeTimerInterval);
           roomRef.update({
             status: 'FINISHED',
+            sessionActive: false,
             winner: {
               nickname: winningGuess.nickname,
               guess: winningGuess.guess
@@ -900,11 +930,25 @@
         selectedDigitMode = room.digitMode || 4;
         currentSecretCode = room.secretCode || '';
 
-        // Timer Sync
-        if (room.timer !== undefined) {
-          const timerEl = document.getElementById('player-timer');
-          if (timerEl) timerEl.innerText = room.timer + 's';
+        // Timer Sync & Session Intermission Lock
+        const timerVal = room.timer !== undefined ? room.timer : 0;
+        const activeState = room.sessionActive === true && timerVal > 0;
+        isSessionActive = activeState;
+
+        const timerEl = document.getElementById('player-timer');
+        if (timerEl) {
+          timerEl.innerText = timerVal + 's';
+          if (timerVal === 0) {
+            timerEl.classList.add('text-rose-400');
+            timerEl.classList.remove('text-amber-400');
+          } else {
+            timerEl.classList.remove('text-rose-400');
+            timerEl.classList.add('text-amber-400');
+          }
         }
+
+        // Toggle Keypad Lock / Banner based on Session Timer
+        togglePlayerKeypadLock(!activeState);
 
         // Auto transition on STATUS == PLAYING
         if (room.status === 'PLAYING') {
@@ -923,8 +967,34 @@
     }
 
     /* =========================================================================
-       9. PLAYER KEYPAD & INPUT SLOTS
+       9. PLAYER KEYPAD & INPUT SLOTS (WITH SESSION TIMER LOCK)
        ========================================================================= */
+    function togglePlayerKeypadLock(isLocked) {
+      const banner = document.getElementById('session-pause-banner');
+      const container = document.getElementById('keypad-container');
+      const submitBtn = document.getElementById('btn-submit-guess');
+      const numpadBtns = document.querySelectorAll('.numpad-btn');
+      const clearBtn = document.getElementById('btn-clear');
+      const deleteBtn = document.getElementById('btn-delete');
+
+      if (isLocked) {
+        if (banner) banner.classList.remove('hidden');
+        if (container) container.classList.add('opacity-40', 'pointer-events-none');
+        if (submitBtn) submitBtn.disabled = true;
+        numpadBtns.forEach(b => b.disabled = true);
+        if (clearBtn) clearBtn.disabled = true;
+        if (deleteBtn) deleteBtn.disabled = true;
+      } else {
+        if (banner) banner.classList.add('hidden');
+        if (container) container.classList.remove('opacity-40', 'pointer-events-none');
+        if (submitBtn) submitBtn.disabled = false;
+        numpadBtns.forEach(b => b.disabled = false);
+        if (clearBtn) clearBtn.disabled = false;
+        if (deleteBtn) deleteBtn.disabled = false;
+        updateNumpadDisabledState();
+      }
+    }
+
     function renderDigitSlots() {
       const container = document.getElementById('digit-slots-container');
       container.innerHTML = '';
@@ -941,6 +1011,7 @@
     }
 
     function pressNumpad(num) {
+      if (!isSessionActive) return; // STRICT GUARD WHEN PAUSED/0S
       document.getElementById('keypad-error-msg').innerText = '';
 
       // Check duplicate
@@ -958,6 +1029,7 @@
     }
 
     function deleteNumpad() {
+      if (!isSessionActive) return;
       if (currentInputDigits.length > 0) {
         playSound('click');
         currentInputDigits.pop();
@@ -967,6 +1039,7 @@
     }
 
     function clearNumpad() {
+      if (!isSessionActive) return;
       playSound('click');
       currentInputDigits = [];
       document.getElementById('keypad-error-msg').innerText = '';
@@ -974,18 +1047,26 @@
     }
 
     function updateNumpadDisabledState() {
+      if (!isSessionActive) return;
       const buttons = document.querySelectorAll('.numpad-btn');
       buttons.forEach(btn => {
         const val = btn.innerText.trim();
         if (currentInputDigits.includes(val)) {
           btn.classList.add('opacity-30', 'cursor-not-allowed');
+          btn.disabled = true;
         } else {
           btn.classList.remove('opacity-30', 'cursor-not-allowed');
+          btn.disabled = false;
         }
       });
     }
 
     function submitPlayerGuess() {
+      if (!isSessionActive) {
+        alert('Sesi saat ini terjeda/habis! Tunggu Host menekan "Lanjut Sesi (15s)".');
+        return;
+      }
+
       if (currentInputDigits.length < selectedDigitMode) {
         playSound('tick');
         document.getElementById('keypad-error-msg').innerText = `Lengkapi ${selectedDigitMode} digit angka tebakan!`;
@@ -1015,41 +1096,57 @@
       document.getElementById('keypad-error-msg').innerText = '';
     }
 
+    /* =========================================================================
+       10. PLAYER GUESS HISTORY TABLE
+       ========================================================================= */
     function listenMyGuessesHistory() {
       db.ref(`rooms/${currentRoomPin}/guesses`).on('value', (snapshot) => {
         const guessesObj = snapshot.val() || {};
         const myGuesses = Object.values(guessesObj).filter(g => g.playerId === localPlayerId);
 
-        // Sort newest first
-        myGuesses.sort((a, b) => b.timestamp - a.timestamp);
+        // Sort chronological ascending to calculate correct trial numbers (#1, #2, #3)
+        myGuesses.sort((a, b) => a.timestamp - b.timestamp);
 
         document.getElementById('my-guess-count').innerText = myGuesses.length + ' kali';
-        const listContainer = document.getElementById('player-history-list');
+        const tbody = document.getElementById('player-history-tbody');
 
         if (myGuesses.length === 0) {
-          listContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-4 italic">Belum ada tebakan dikirim.</p>`;
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="4" class="text-slate-400 text-xs py-4 italic font-normal">Belum ada tebakan dikirim.</td>
+            </tr>`;
           return;
         }
 
-        listContainer.innerHTML = myGuesses.map((g, idx) => `
-          <div class="flex items-center justify-between p-2.5 bg-slate-950/70 border border-white/10 rounded-xl text-xs font-bold animate-slide-in">
-            <span class="text-amber-300 text-base font-black tracking-widest fredoka">${g.guess}</span>
-            <div class="flex gap-2">
-              <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                Posisi: <strong>${g.posisiBenar}</strong>
-              </span>
-              <span class="px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
-                Angka: <strong>${g.angkaBenar}</strong>
-              </span>
-            </div>
-          </div>
-        `).join('');
+        // Render table rows (newest on top)
+        const reversedGuesses = [...myGuesses].reverse();
+
+        tbody.innerHTML = reversedGuesses.map((g) => {
+          // Find chronological guess number
+          const originalIndex = myGuesses.indexOf(g) + 1;
+          return `
+            <tr class="border-b border-white/5 hover:bg-white/5 transition animate-slide-in">
+              <td class="py-2 px-2 text-slate-400 font-normal">#${originalIndex}</td>
+              <td class="py-2 px-3 text-amber-300 text-sm font-black tracking-widest fredoka text-left">${g.guess}</td>
+              <td class="py-2 px-2">
+                <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold">
+                  ${g.posisiBenar}
+                </span>
+              </td>
+              <td class="py-2 px-2">
+                <span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[11px] font-bold">
+                  ${g.angkaBenar}
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join('');
       });
     }
 
 
     /* =========================================================================
-       10. WINNER & CELEBRATION
+       11. WINNER & CELEBRATION
        ========================================================================= */
     function triggerWinnerCelebration(winnerNickname, secretCode) {
       playSound('win');
@@ -1069,7 +1166,7 @@
     }
 
     /* =========================================================================
-       11. UTILITY FUNCTIONS & URL AUTO-JOIN
+       12. UTILITY FUNCTIONS & URL AUTO-JOIN
        ========================================================================= */
     function escapeHtml(str) {
       return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
