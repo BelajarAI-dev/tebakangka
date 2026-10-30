@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bulls & Cows Multiplayer - Kahoot! Edition</title>
+  <title>Bulls & Cows Multiplayer - Kahoot! Firebase Edition</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -109,31 +109,54 @@
       box-shadow: 0 2px 0 0 transparent !important;
     }
   </style>
+
+  <!-- Firebase Modular SDK v11.6.1 -->
+  <script type="module">
+    import { initializeApp, getApps, deleteApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getDatabase, ref, set, get, onValue, push, child, update, remove, off, onDisconnect } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+    // Attach to global window object for app logic
+    window.FB = {
+      initializeApp, getApps, deleteApp,
+      getDatabase, ref, set, get, onValue, push, child, update, remove, off, onDisconnect,
+      app: null,
+      db: null
+    };
+
+    // Auto-initialize on DOM load if config exists in localStorage
+    window.addEventListener('DOMContentLoaded', () => {
+      initFirebaseFromStorage();
+    });
+  </script>
 </head>
 <body class="text-white min-h-screen flex flex-col justify-between overflow-x-hidden">
 
   <!-- Top Navigation & Sync Status Bar -->
-  <header class="bg-black/40 backdrop-blur-md border-b border-white/10 px-4 py-3 sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto flex justify-between items-center">
+  <header class="bg-black/40 backdrop-blur-md border-b border-white/10 px-4 py-3 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto flex justify-between items-center flex-wrap gap-2">
       <div class="flex items-center gap-3">
         <div class="bg-kahoot-purple p-2 rounded-xl border-2 border-purple-400/30">
-          <i class="fa-solid me-1 fa-bullseye text-amber-400 text-xl"></i>
+          <i class="fa-solid fa-bullseye text-amber-400 text-xl me-1"></i>
           <span class="font-fredoka font-bold text-lg tracking-wide bg-gradient-to-r from-amber-300 to-yellow-500 bg-clip-text text-transparent">BULLS & COWS</span>
         </div>
-        <span class="hidden sm:inline-block bg-white/10 text-xs px-2.5 py-1 rounded-full text-purple-200 border border-white/10">
-          <i class="fa-solid fa-bolt text-yellow-400 me-1"></i> Multi-Tab Sync
-        </span>
+        
+        <!-- Firebase Status Indicator -->
+        <div id="firebase-status-badge" onclick="openFirebaseConfigModal()" class="cursor-pointer bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-300 text-xs px-3 py-1.5 rounded-full flex items-center gap-2 transition">
+          <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+          <span id="firebase-status-text" class="font-semibold">Firebase Belum Dikonfigurasi</span>
+          <i class="fa-solid fa-gear text-xs"></i>
+        </div>
       </div>
 
-      <!-- Quick Role Switcher Header Controls -->
+      <!-- Quick Controls -->
       <div class="flex items-center gap-2">
-        <button id="btn-switch-role" onclick="resetRoleSelection()" class="text-xs bg-white/10 hover:bg-white/20 text-white font-semibold py-1.5 px-3 rounded-lg border border-white/20 transition flex items-center gap-2">
+        <button onclick="openFirebaseConfigModal()" class="text-xs bg-white/10 hover:bg-white/20 text-white font-semibold py-1.5 px-3 rounded-lg border border-white/20 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-sliders text-amber-400"></i>
+          <span class="hidden sm:inline">Set Setting Firebase</span>
+        </button>
+        <button id="btn-switch-role" onclick="resetRoleSelection()" class="text-xs bg-white/10 hover:bg-white/20 text-white font-semibold py-1.5 px-3 rounded-lg border border-white/20 transition flex items-center gap-1.5">
           <i class="fa-solid fa-arrows-rotate"></i>
           <span id="role-badge">Pilih Peran</span>
-        </button>
-        <button onclick="openNewTab()" class="text-xs bg-kahoot-blue hover:bg-blue-600 text-white font-semibold py-1.5 px-3 rounded-lg border border-blue-400/40 transition flex items-center gap-1.5">
-          <i class="fa-solid fa-plus"></i>
-          <span class="hidden sm:inline">Buka Tab Pemain Baru</span>
         </button>
       </div>
     </div>
@@ -151,7 +174,7 @@
       </div>
       <h1 class="font-fredoka text-3xl sm:text-5xl font-bold mb-3 tracking-wide">Pilih Peran Permainan</h1>
       <p class="text-purple-200 text-sm sm:text-base mb-8 max-w-lg mx-auto">
-        Gunakan satu tab browser sebagai <span class="text-amber-300 font-bold">Host Proyektor</span> dan tab browser lainnya sebagai <span class="text-cyan-300 font-bold">Peserta (Pemain)</span>.
+        Tampilkan layar <span class="text-amber-300 font-bold">Host Proyektor</span> di laptop/layar utama dan minta seluruh peserta bergabung via <span class="text-cyan-300 font-bold">HP Peserta</span> menggunakan PIN Game.
       </p>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -191,7 +214,7 @@
             <span class="text-xs font-bold text-amber-400 tracking-wider uppercase">Layar Proyektor Host</span>
             <h2 class="font-fredoka text-2xl sm:text-3xl font-bold">Lobby Permainan Baru</h2>
           </div>
-          <button onclick="createNewGame()" class="btn-kahoot bg-kahoot-yellow hover:bg-amber-600 text-black font-fredoka font-bold px-6 py-3 rounded-2xl shadow-kahoot-yellow text-lg flex items-center gap-2">
+          <button onclick="createNewGameHost()" class="btn-kahoot bg-kahoot-yellow hover:bg-amber-600 text-black font-fredoka font-bold px-6 py-3 rounded-2xl shadow-kahoot-yellow text-lg flex items-center gap-2">
             <i class="fa-solid fa-rotate-right"></i> Generasi PIN Baru
           </button>
         </div>
@@ -204,7 +227,7 @@
               ------
             </div>
             <p class="text-xs text-purple-300 mt-2">
-              Buka tab peserta dan masukkan PIN di atas untuk bergabung!
+              Peserta membuka web ini di HP dan memasukkan PIN di atas!
             </p>
           </div>
 
@@ -219,7 +242,7 @@
                 ????
               </div>
             </div>
-            <button onclick="toggleSecretVisibility()" class="mt-4 text-xs text-purple-300 hover:text-white underline">
+            <button onclick="toggleSecretVisibilityHost()" class="mt-4 text-xs text-purple-300 hover:text-white underline">
               <i class="fa-solid fa-eye me-1"></i> Tampilkan/Sembunyikan Kode
             </button>
           </div>
@@ -244,7 +267,7 @@
 
         <!-- Start Game Button -->
         <div class="mt-8 pt-6 border-t border-white/10">
-          <button id="btn-start-game" onclick="startGame()" disabled class="w-full sm:w-auto btn-kahoot bg-kahoot-green disabled:opacity-40 disabled:cursor-not-allowed hover:bg-emerald-600 text-white font-fredoka text-2xl font-bold px-12 py-4 rounded-2xl shadow-kahoot-green transition">
+          <button id="btn-start-game" onclick="startGameHost()" disabled class="w-full sm:w-auto btn-kahoot bg-kahoot-green disabled:opacity-40 disabled:cursor-not-allowed hover:bg-emerald-600 text-white font-fredoka text-2xl font-bold px-12 py-4 rounded-2xl shadow-kahoot-green transition">
             <i class="fa-solid fa-play me-2"></i> MULAI PERMAINAN
           </button>
         </div>
@@ -258,7 +281,7 @@
           <div class="flex items-center gap-4">
             <div class="bg-purple-900/80 px-4 py-2 rounded-2xl border border-purple-400/40">
               <span class="text-xs text-purple-300 block">PIN GAME</span>
-              <span id="dash-pin" class="font-fredoka text-2xl font-bold text-amber-300">482109</span>
+              <span id="dash-pin" class="font-fredoka text-2xl font-bold text-amber-300">------</span>
             </div>
             <div>
               <div class="text-xs text-purple-300">STATUS PERMAINAN</div>
@@ -279,10 +302,10 @@
             </div>
 
             <div class="flex gap-2">
-              <button onclick="triggerNextSession()" class="btn-kahoot bg-kahoot-blue hover:bg-blue-600 text-white font-fredoka font-bold px-5 py-3 rounded-2xl shadow-kahoot-blue text-sm flex items-center gap-2">
+              <button onclick="triggerNextSessionHost()" class="btn-kahoot bg-kahoot-blue hover:bg-blue-600 text-white font-fredoka font-bold px-5 py-3 rounded-2xl shadow-kahoot-blue text-sm flex items-center gap-2">
                 <i class="fa-solid fa-forward-step"></i> Lanjut Sesi (15s)
               </button>
-              <button onclick="endGameManual()" class="btn-kahoot bg-kahoot-red hover:bg-red-700 text-white font-fredoka font-bold px-4 py-3 rounded-2xl shadow-kahoot-red text-sm flex items-center gap-2">
+              <button onclick="endGameManualHost()" class="btn-kahoot bg-kahoot-red hover:bg-red-700 text-white font-fredoka font-bold px-4 py-3 rounded-2xl shadow-kahoot-red text-sm flex items-center gap-2">
                 <i class="fa-solid fa-power-off"></i> Akhiri
               </button>
             </div>
@@ -367,7 +390,7 @@
           </div>
         </div>
 
-        <button onclick="resetToLobby()" class="btn-kahoot bg-kahoot-purple hover:bg-purple-700 text-white font-fredoka text-xl font-bold px-8 py-4 rounded-2xl shadow-kahoot-purple">
+        <button onclick="createNewGameHost()" class="btn-kahoot bg-kahoot-purple hover:bg-purple-700 text-white font-fredoka text-xl font-bold px-8 py-4 rounded-2xl shadow-kahoot-purple">
           <i class="fa-solid fa-house me-2"></i> Kembali ke Lobby Utama
         </button>
       </div>
@@ -387,7 +410,7 @@
         <h2 class="font-fredoka text-3xl font-bold mb-2">Gabung Game</h2>
         <p class="text-xs text-purple-200 mb-6">Masukkan Game PIN & Nickname kamu</p>
 
-        <form onsubmit="joinGame(event)" class="space-y-4 text-left">
+        <form onsubmit="joinGamePlayer(event)" class="space-y-4 text-left">
           <div>
             <label class="block text-xs font-bold text-purple-200 uppercase tracking-wider mb-1">GAME PIN (6 Digit)</label>
             <input type="text" id="input-pin" required maxlength="6" pattern="[0-9]{6}" placeholder="Contoh: 482109" class="w-full bg-black/40 border-2 border-white/20 focus:border-cyan-400 rounded-2xl px-4 py-3.5 text-center font-fredoka text-2xl tracking-widest text-amber-300 placeholder-gray-600 outline-none transition">
@@ -517,16 +540,76 @@
 
   </main>
 
+  <!-- ========================================== -->
+  <!-- 4. FIREBASE CONFIG SETUP MODAL             -->
+  <!-- ========================================== -->
+  <div id="modal-firebase-config" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-purple-500/40 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl text-left relative">
+      <button onclick="closeFirebaseConfigModal()" class="absolute top-5 right-5 text-gray-400 hover:text-white text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="p-3 bg-amber-500/20 text-amber-400 rounded-2xl border border-amber-500/30">
+          <i class="fa-solid fa-fire-flame-curved text-2xl"></i>
+        </div>
+        <div>
+          <h3 class="font-fredoka text-2xl font-bold">Konfigurasi Firebase</h3>
+          <p class="text-xs text-gray-400">Diperlukan untuk sinkronisasi Realtime Database antar HP/Laptop</p>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-purple-200 uppercase tracking-wider mb-1">
+            Tempelkan JSON Firebase Config Anda:
+          </label>
+          <textarea id="firebase-json-input" rows="6" placeholder='{
+  "apiKey": "AIzaSy...",
+  "authDomain": "myproject.firebaseapp.com",
+  "databaseURL": "https://myproject-default-rtdb.firebaseio.com",
+  "projectId": "myproject",
+  "storageBucket": "myproject.appspot.com",
+  "messagingSenderId": "123456789",
+  "appId": "1:123456789:web:abc"
+}' class="w-full bg-black/60 border border-white/20 focus:border-amber-400 rounded-xl p-3 font-mono text-xs text-amber-300 outline-none transition"></textarea>
+        </div>
+
+        <div class="bg-purple-950/60 border border-purple-400/20 rounded-xl p-3 text-[11px] text-purple-200 space-y-1">
+          <p class="font-bold text-amber-300"><i class="fa-solid fa-circle-info me-1"></i> Cara Memperoleh Config Firebase Gratis:</p>
+          <ol class="list-decimal list-inside space-y-0.5 text-gray-300">
+            <li>Buka <a href="https://console.firebase.google.com" target="_blank" class="text-cyan-400 underline">Firebase Console</a> & buat Project baru.</li>
+            <li>Tambahkan Web App dan salin objek <code class="text-amber-300">firebaseConfig</code>.</li>
+            <li>Aktifkan <strong>Realtime Database</strong> dan atur Security Rules ke test mode (<code class="text-amber-300">".read": true, ".write": true</code>).</li>
+          </ol>
+        </div>
+
+        <div id="config-error-alert" class="hidden bg-red-500/20 border border-red-500/40 text-red-300 text-xs p-2.5 rounded-xl">
+          Format JSON tidak valid! Pastikan format JSON sesuai.
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button onclick="saveFirebaseConfigFromInput()" class="flex-1 btn-kahoot bg-kahoot-green hover:bg-emerald-600 text-white font-fredoka font-bold py-3 rounded-xl shadow-kahoot-green text-sm">
+            <i class="fa-solid fa-check me-1"></i> Simpan & Hubungkan
+          </button>
+          <button onclick="clearFirebaseConfig()" class="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 px-4 py-3 rounded-xl text-xs font-bold">
+            Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer class="text-center py-3 text-xs text-purple-300/60 border-t border-white/5 bg-black/20">
-    Bulls and Cows Web App &copy; 2026 • Dirancang untuk Sesi Interaktif & Pelatihan LKMM-TD
+    Bulls and Cows Web App &copy; 2026 • Firebase Realtime Sync • Dirancang untuk LKMM-TD
   </footer>
 
   <!-- ================================================================= -->
-  <!-- JAVASCRIPT LOGIC (BroadcastChannel, State, Sound Synth, UX)       -->
+  <!-- JAVASCRIPT LOGIC (Firebase Realtime Database, State, Sound Synth) -->
   <!-- ================================================================= -->
   <script>
-    // --- WEB AUDIO API SYNTH (Sound Effects without external audio files) ---
+    // --- WEB AUDIO API SYNTH ---
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx = null;
 
@@ -585,94 +668,130 @@
             o.stop(now + idx * 0.1 + 0.25);
           });
         }
-      } catch (e) {
-        // Audio error fallback silent
-      }
+      } catch (e) {}
     }
 
-    // --- GLOBAL BROADCAST CHANNEL ---
-    const channel = new BroadcastChannel('bulls_cows_kahoot_channel');
-
-    // App State
+    // --- APP STATE ---
     let currentRole = null; // 'HOST' or 'PLAYER'
     
-    // Host Master State
+    // Host State
     let hostState = {
       pin: '',
       secretCode: '',
       isSecretVisible: false,
-      status: 'IDLE', // IDLE, LOBBY, PLAYING, FINISHED
-      players: {}, // { socketId/playerId: { id, nickname, guesses: [] } }
-      liveFeed: [], // Max 15 items: { nickname, guess, bulls, cows, session, timestamp }
+      status: 'IDLE',
+      players: {},
+      liveFeed: [],
       sessionNum: 1,
       timeLeft: 15,
       timerInterval: null,
-      winner: null
+      winner: null,
+      unsubs: []
     };
 
-    // Player Client State
+    // Player State
     let playerState = {
       pin: '',
       nickname: '',
       playerId: 'player_' + Math.random().toString(36).substr(2, 9),
-      joined: false,
       currentDigits: [],
       hasSubmittedThisSession: false,
-      history: []
+      history: [],
+      unsubs: []
     };
 
-    // --- CHANNEL EVENT LISTENER ---
-    channel.onmessage = (event) => {
-      const { type, data } = event.data;
+    // --- FIREBASE MANAGEMENT ---
+    function initFirebaseFromStorage() {
+      const savedConfigStr = localStorage.getItem('bulls_cows_firebase_config');
+      const badgeText = document.getElementById('firebase-status-text');
+      const badge = document.getElementById('firebase-status-badge');
 
-      if (currentRole === 'HOST') {
-        handleHostChannelEvents(type, data);
-      } else if (currentRole === 'PLAYER') {
-        handlePlayerChannelEvents(type, data);
+      if (!savedConfigStr) {
+        badgeText.innerText = "Firebase Belum Dikonfigurasi";
+        badge.className = "cursor-pointer bg-red-500/20 border border-red-500/40 text-red-300 text-xs px-3 py-1.5 rounded-full flex items-center gap-2 transition";
+        openFirebaseConfigModal();
+        return false;
       }
-    };
 
-    // --- BROADCAST MESSAGES HELPERS ---
-    function broadcastMsg(type, data) {
-      channel.postMessage({ type, data });
-    }
+      try {
+        const config = JSON.parse(savedConfigStr);
+        if (window.FB.app) {
+          window.FB.deleteApp(window.FB.app);
+        }
+        window.FB.app = window.FB.initializeApp(config);
+        window.FB.db = window.FB.getDatabase(window.FB.app);
 
-    // ==========================================
-    // ROLE SELECTION & UI MANAGEMENT
-    // ==========================================
-    function selectRole(role) {
-      playSound('click');
-      currentRole = role;
-      document.getElementById('screen-role-select').classList.add('hidden');
-
-      if (role === 'HOST') {
-        document.getElementById('role-badge').innerText = 'Peran: HOST';
-        document.getElementById('screen-host-container').classList.remove('hidden');
-        createNewGame();
-      } else {
-        document.getElementById('role-badge').innerText = 'Peran: PESERTA';
-        document.getElementById('screen-player-container').classList.remove('hidden');
-        showPlayerScreen('player-join');
+        badgeText.innerText = "Firebase Terhubung ✓";
+        badge.className = "cursor-pointer bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs px-3 py-1.5 rounded-full flex items-center gap-2 transition";
+        return true;
+      } catch (err) {
+        console.error("Firebase init error:", err);
+        badgeText.innerText = "Error Koneksi Firebase";
+        badge.className = "cursor-pointer bg-red-500/20 border border-red-500/40 text-red-300 text-xs px-3 py-1.5 rounded-full flex items-center gap-2 transition";
+        return false;
       }
     }
 
-    function resetRoleSelection() {
+    function openFirebaseConfigModal() {
       playSound('click');
-      if (hostState.timerInterval) clearInterval(hostState.timerInterval);
-      currentRole = null;
-      document.getElementById('screen-host-container').classList.add('hidden');
-      document.getElementById('screen-player-container').classList.add('hidden');
-      document.getElementById('screen-role-select').classList.remove('hidden');
-      document.getElementById('role-badge').innerText = 'Pilih Peran';
+      const saved = localStorage.getItem('bulls_cows_firebase_config');
+      if (saved) {
+        document.getElementById('firebase-json-input').value = saved;
+      }
+      document.getElementById('config-error-alert').classList.add('hidden');
+      document.getElementById('modal-firebase-config').classList.remove('hidden');
     }
 
-    function openNewTab() {
-      window.open(window.location.href, '_blank');
+    function closeFirebaseConfigModal() {
+      playSound('click');
+      document.getElementById('modal-firebase-config').classList.add('hidden');
     }
 
-    // ==========================================
-    // LOGIC: BULLS AND COWS EVALUATION
-    // ==========================================
+    function saveFirebaseConfigFromInput() {
+      playSound('click');
+      const raw = document.getElementById('firebase-json-input').value.trim();
+      const errAlert = document.getElementById('config-error-alert');
+
+      try {
+        // Try parsing JSON
+        const parsed = JSON.parse(raw);
+        if (!parsed.apiKey || !parsed.databaseURL) {
+          errAlert.innerText = "Objek JSON harus memiliki 'apiKey' dan 'databaseURL'!";
+          errAlert.classList.remove('hidden');
+          return;
+        }
+
+        localStorage.setItem('bulls_cows_firebase_config', JSON.stringify(parsed));
+        errAlert.classList.add('hidden');
+        closeFirebaseConfigModal();
+
+        if (initFirebaseFromStorage()) {
+          alertCustom("Konfigurasi Firebase Berhasil Disimpan & Terhubung!");
+        }
+      } catch (e) {
+        errAlert.innerText = "JSON Syntax Error! Pastikan format JSON valid.";
+        errAlert.classList.remove('hidden');
+      }
+    }
+
+    function clearFirebaseConfig() {
+      playSound('click');
+      localStorage.removeItem('bulls_cows_firebase_config');
+      document.getElementById('firebase-json-input').value = '';
+      initFirebaseFromStorage();
+      closeFirebaseConfigModal();
+    }
+
+    function alertCustom(msg) {
+      // Inline message box replacing alert()
+      const box = document.createElement('div');
+      box.className = 'fixed bottom-5 right-5 bg-slate-900 border border-emerald-500 text-emerald-300 font-bold px-5 py-3 rounded-2xl shadow-2xl z-50 text-sm flex items-center gap-2 animate-bounce';
+      box.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i> ${msg}`;
+      document.body.appendChild(box);
+      setTimeout(() => box.remove(), 3500);
+    }
+
+    // --- LOGIC: BULLS AND COWS MATH ---
     function generateSecretCode() {
       const digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
       digits.sort(() => Math.random() - 0.5);
@@ -696,10 +815,53 @@
       return { bulls, cows };
     }
 
+    // --- ROLE & NAVIGATION ---
+    function selectRole(role) {
+      if (!window.FB.db) {
+        openFirebaseConfigModal();
+        return;
+      }
+
+      playSound('click');
+      currentRole = role;
+      document.getElementById('screen-role-select').classList.add('hidden');
+
+      if (role === 'HOST') {
+        document.getElementById('role-badge').innerText = 'Peran: HOST';
+        document.getElementById('screen-host-container').classList.remove('hidden');
+        createNewGameHost();
+      } else {
+        document.getElementById('role-badge').innerText = 'Peran: PESERTA';
+        document.getElementById('screen-player-container').classList.remove('hidden');
+        showPlayerScreen('player-join');
+      }
+    }
+
+    function resetRoleSelection() {
+      playSound('click');
+      clearHostSubscriptions();
+      clearPlayerSubscriptions();
+
+      if (hostState.timerInterval) clearInterval(hostState.timerInterval);
+
+      currentRole = null;
+      document.getElementById('screen-host-container').classList.add('hidden');
+      document.getElementById('screen-player-container').classList.add('hidden');
+      document.getElementById('screen-role-select').classList.remove('hidden');
+      document.getElementById('role-badge').innerText = 'Pilih Peran';
+    }
+
     // ==========================================
-    // HOST ENGINE
+    // HOST ENGINE (FIREBASE SYNCHRONIZED)
     // ==========================================
-    function createNewGame() {
+    function clearHostSubscriptions() {
+      hostState.unsubs.forEach(unsub => unsub());
+      hostState.unsubs = [];
+    }
+
+    function createNewGameHost() {
+      if (!window.FB.db) return;
+      clearHostSubscriptions();
       if (hostState.timerInterval) clearInterval(hostState.timerInterval);
 
       hostState.pin = generateGamePin();
@@ -712,7 +874,7 @@
       hostState.timeLeft = 15;
       hostState.winner = null;
 
-      // Update Lobby UI
+      // Update Host Lobby UI
       document.getElementById('host-pin-display').innerText = hostState.pin;
       document.getElementById('host-secret-display').innerText = '****';
       document.getElementById('lobby-count').innerText = '0';
@@ -723,35 +885,71 @@
       `;
       document.getElementById('btn-start-game').disabled = true;
 
-      // Show Lobby Screen
       document.getElementById('host-lobby').classList.remove('hidden');
       document.getElementById('host-dashboard').classList.add('hidden');
       document.getElementById('host-winner-modal').classList.add('hidden');
 
-      // Broadcast Room Creation
-      broadcastMsg('ROOM_CREATED', {
+      // Initialize Room in Firebase
+      const roomRef = window.FB.ref(window.FB.db, 'rooms/' + hostState.pin);
+      window.FB.set(roomRef, {
         pin: hostState.pin,
-        status: 'LOBBY'
+        secretCode: hostState.secretCode,
+        status: 'LOBBY',
+        sessionNum: 1,
+        timeLeft: 15,
+        winner: null,
+        createdAt: Date.now()
       });
+
+      // Listen to Players Joining via Firebase
+      const playersRef = window.FB.ref(window.FB.db, `rooms/${hostState.pin}/players`);
+      const unsubPlayers = window.FB.onValue(playersRef, (snapshot) => {
+        const val = snapshot.val() || {};
+        hostState.players = val;
+        updateLobbyPlayerListHost();
+        renderHostPlayerStats();
+      });
+      hostState.unsubs.push(unsubPlayers);
+
+      // Listen to Guesses Submitted via Firebase
+      const guessesRef = window.FB.ref(window.FB.db, `rooms/${hostState.pin}/guesses`);
+      const unsubGuesses = window.FB.onValue(guessesRef, (snapshot) => {
+        const data = snapshot.val() || {};
+        const list = Object.values(data);
+        
+        // Sort chronologically (newest first) and take last 15
+        list.sort((a, b) => b.timestamp - a.timestamp);
+        hostState.liveFeed = list.slice(0, 15);
+
+        renderLiveFeedHost();
+      });
+      hostState.unsubs.push(unsubGuesses);
     }
 
-    function toggleSecretVisibility() {
+    function toggleSecretVisibilityHost() {
       playSound('click');
       hostState.isSecretVisible = !hostState.isSecretVisible;
       document.getElementById('host-secret-display').innerText = hostState.isSecretVisible ? hostState.secretCode : '****';
       document.getElementById('dash-secret-code-bottom').innerText = hostState.isSecretVisible ? hostState.secretCode : '****';
     }
 
-    function startGame() {
+    function startGameHost() {
       if (Object.keys(hostState.players).length === 0) return;
       playSound('click');
 
       hostState.status = 'PLAYING';
       hostState.sessionNum = 1;
       hostState.timeLeft = 15;
-      hostState.liveFeed = [];
 
-      // Switch View
+      // Update Firebase Room Status
+      const roomRef = window.FB.ref(window.FB.db, 'rooms/' + hostState.pin);
+      window.FB.update(roomRef, {
+        status: 'PLAYING',
+        sessionNum: 1,
+        timeLeft: 15
+      });
+
+      // UI View
       document.getElementById('host-lobby').classList.add('hidden');
       document.getElementById('host-dashboard').classList.remove('hidden');
 
@@ -759,35 +957,25 @@
       document.getElementById('dash-session-num').innerText = hostState.sessionNum;
       document.getElementById('dash-secret-code-bottom').innerText = hostState.isSecretVisible ? hostState.secretCode : '****';
 
-      renderHostPlayerStats();
-      renderLiveFeed();
-
-      // Broadcast Game Started
-      broadcastMsg('GAME_STARTED', {
-        pin: hostState.pin,
-        sessionNum: hostState.sessionNum,
-        timeLeft: hostState.timeLeft
-      });
-
-      startSessionTimer();
+      startSessionTimerHost();
     }
 
-    function startSessionTimer() {
+    function startSessionTimerHost() {
       if (hostState.timerInterval) clearInterval(hostState.timerInterval);
 
       hostState.timeLeft = 15;
-      updateTimerUI(hostState.timeLeft);
+      updateTimerUIHost(hostState.timeLeft);
 
       hostState.timerInterval = setInterval(() => {
         hostState.timeLeft--;
-        updateTimerUI(hostState.timeLeft);
+        updateTimerUIHost(hostState.timeLeft);
 
-        // Broadcast Tick
-        broadcastMsg('TIMER_TICK', {
-          pin: hostState.pin,
-          timeLeft: hostState.timeLeft,
-          sessionNum: hostState.sessionNum
-        });
+        // Sync Time to Firebase
+        if (window.FB.db && hostState.pin) {
+          window.FB.update(window.FB.ref(window.FB.db, 'rooms/' + hostState.pin), {
+            timeLeft: hostState.timeLeft
+          });
+        }
 
         if (hostState.timeLeft <= 0) {
           clearInterval(hostState.timerInterval);
@@ -796,7 +984,7 @@
       }, 1000);
     }
 
-    function updateTimerUI(seconds) {
+    function updateTimerUIHost(seconds) {
       const timerEl = document.getElementById('dash-timer');
       timerEl.innerText = `${seconds}s`;
 
@@ -808,91 +996,21 @@
       }
     }
 
-    function triggerNextSession() {
+    function triggerNextSessionHost() {
       playSound('click');
       hostState.sessionNum++;
       document.getElementById('dash-session-num').innerText = hostState.sessionNum;
 
-      broadcastMsg('NEW_SESSION_STARTED', {
-        pin: hostState.pin,
+      // Update Firebase
+      window.FB.update(window.FB.ref(window.FB.db, 'rooms/' + hostState.pin), {
         sessionNum: hostState.sessionNum,
         timeLeft: 15
       });
 
-      startSessionTimer();
+      startSessionTimerHost();
     }
 
-    function handleHostChannelEvents(type, data) {
-      if (data.pin !== hostState.pin) return;
-
-      if (type === 'PLAYER_JOIN_REQUEST') {
-        // Add Player
-        hostState.players[data.playerId] = {
-          id: data.playerId,
-          nickname: data.nickname,
-          guessesCount: 0,
-          lastGuess: null
-        };
-
-        // Update Lobby
-        updateLobbyPlayerList();
-
-        // Ack Player
-        broadcastMsg('PLAYER_JOIN_RESPONSE', {
-          pin: hostState.pin,
-          playerId: data.playerId,
-          success: true,
-          status: hostState.status,
-          sessionNum: hostState.sessionNum
-        });
-      } else if (type === 'SUBMIT_GUESS_REQUEST') {
-        if (hostState.status !== 'PLAYING') return;
-
-        const { playerId, nickname, guess, sessionNum } = data;
-        const evaluation = evaluateGuess(hostState.secretCode, guess);
-
-        // Update Player stats
-        if (hostState.players[playerId]) {
-          hostState.players[playerId].guessesCount++;
-          hostState.players[playerId].lastGuess = { guess, ...evaluation };
-        }
-
-        // Add to FIFO Feed (Max 15)
-        const feedItem = {
-          nickname,
-          guess,
-          bulls: evaluation.bulls,
-          cows: evaluation.cows,
-          sessionNum,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-        };
-
-        hostState.liveFeed.unshift(feedItem); // Put newest at front
-        if (hostState.liveFeed.length > 15) {
-          hostState.liveFeed.pop(); // Remove 16th item (FIFO)
-        }
-
-        renderLiveFeed();
-        renderHostPlayerStats();
-
-        // Respond back to player with private feedback
-        broadcastMsg('GUESS_EVALUATION_RESULT', {
-          pin: hostState.pin,
-          playerId,
-          guess,
-          bulls: evaluation.bulls,
-          cows: evaluation.cows,
-          sessionNum
-        });
-
-        // Check Winner Condition (4 Bulls)
-        if (evaluation.bulls === 4) {
-          triggerWinner(nickname);
-        }
-      }
-    }
-
-    function updateLobbyPlayerList() {
+    function updateLobbyPlayerListHost() {
       const listContainer = document.getElementById('lobby-player-list');
       const playersArr = Object.values(hostState.players);
       document.getElementById('lobby-count').innerText = playersArr.length;
@@ -917,7 +1035,7 @@
       `).join('');
     }
 
-    function renderLiveFeed() {
+    function renderLiveFeedHost() {
       const container = document.getElementById('feed-list');
       document.getElementById('feed-count').innerText = hostState.liveFeed.length;
 
@@ -930,34 +1048,37 @@
         return;
       }
 
-      container.innerHTML = hostState.liveFeed.map((item, index) => `
-        <div class="feed-item-animate bg-white/10 hover:bg-white/15 border border-white/10 rounded-2xl p-3 flex flex-wrap sm:flex-nowrap justify-between items-center gap-2">
-          <div class="flex items-center gap-3">
-            <span class="text-xs font-bold bg-white/20 text-purple-200 w-6 h-6 rounded-full flex items-center justify-center">
-              ${index + 1}
-            </span>
-            <div>
-              <div class="font-fredoka text-lg font-bold text-cyan-300">${escapeHtml(item.nickname)}</div>
-              <div class="text-[10px] text-purple-300">Sesi ${item.sessionNum} • ${item.timestamp}</div>
+      container.innerHTML = hostState.liveFeed.map((item, index) => {
+        const timeStr = new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        return `
+          <div class="feed-item-animate bg-white/10 hover:bg-white/15 border border-white/10 rounded-2xl p-3 flex flex-wrap sm:flex-nowrap justify-between items-center gap-2">
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-bold bg-white/20 text-purple-200 w-6 h-6 rounded-full flex items-center justify-center">
+                ${index + 1}
+              </span>
+              <div>
+                <div class="font-fredoka text-lg font-bold text-cyan-300">${escapeHtml(item.nickname)}</div>
+                <div class="text-[10px] text-purple-300">Sesi ${item.sessionNum} • ${timeStr}</div>
+              </div>
             </div>
-          </div>
 
-          <div class="flex items-center gap-3">
-            <div class="font-mono text-2xl font-extrabold tracking-widest text-amber-300 bg-black/40 px-3 py-1 rounded-xl border border-white/10">
-              ${item.guess}
-            </div>
-            
-            <div class="flex gap-1">
-              <span class="bg-red-600/80 border border-red-400/50 text-white font-bold text-xs px-2.5 py-1 rounded-lg flex items-center gap-1">
-                🎯 ${item.bulls} Bull
-              </span>
-              <span class="bg-cyan-600/80 border border-cyan-400/50 text-white font-bold text-xs px-2.5 py-1 rounded-lg flex items-center gap-1">
-                🐄 ${item.cows} Cow
-              </span>
+            <div class="flex items-center gap-3">
+              <div class="font-mono text-2xl font-extrabold tracking-widest text-amber-300 bg-black/40 px-3 py-1 rounded-xl border border-white/10">
+                ${item.guess}
+              </div>
+              
+              <div class="flex gap-1">
+                <span class="bg-red-600/80 border border-red-400/50 text-white font-bold text-xs px-2.5 py-1 rounded-lg flex items-center gap-1">
+                  🎯 ${item.bulls} Bull
+                </span>
+                <span class="bg-cyan-600/80 border border-cyan-400/50 text-white font-bold text-xs px-2.5 py-1 rounded-lg flex items-center gap-1">
+                  🐄 ${item.cows} Cow
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function renderHostPlayerStats() {
@@ -976,70 +1097,62 @@
             ${escapeHtml(p.nickname)}
           </div>
           <div class="text-purple-300">
-            ${p.guessesCount} Tebakan ${p.lastGuess ? `(Terakhir: <span class="font-mono text-amber-300">${p.lastGuess.guess}</span>)` : ''}
+            Pemain Aktif
           </div>
         </div>
       `).join('');
     }
 
-    function triggerWinner(winnerName) {
+    function triggerWinnerHost(winnerName) {
       if (hostState.timerInterval) clearInterval(hostState.timerInterval);
 
       hostState.status = 'FINISHED';
       hostState.winner = winnerName;
 
-      playSound('win');
-
-      // Confetti burst
-      confetti({
-        particleCount: 150,
-        spread: 100,
-        origin: { y: 0.6 }
+      // Update Firebase
+      window.FB.update(window.FB.ref(window.FB.db, 'rooms/' + hostState.pin), {
+        status: 'FINISHED',
+        winner: winnerName
       });
+
+      playSound('win');
+      confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
 
       document.getElementById('host-dashboard').classList.add('hidden');
       document.getElementById('host-winner-modal').classList.remove('hidden');
 
       document.getElementById('winner-name').innerText = winnerName;
       document.getElementById('winner-secret-code').innerText = hostState.secretCode;
+    }
 
-      broadcastMsg('GAME_OVER', {
-        pin: hostState.pin,
-        winner: winnerName,
-        secretCode: hostState.secretCode,
-        reason: 'WINNER_FOUND'
+    function endGameManualHost() {
+      playSound('click');
+      if (hostState.timerInterval) clearInterval(hostState.timerInterval);
+
+      hostState.status = 'FINISHED';
+
+      // Update Firebase
+      window.FB.update(window.FB.ref(window.FB.db, 'rooms/' + hostState.pin), {
+        status: 'FINISHED',
+        winner: null
       });
-    }
 
-    function endGameManual() {
-      if (confirm('Yakin ingin mengakhiri permainan sekarang?')) {
-        playSound('click');
-        if (hostState.timerInterval) clearInterval(hostState.timerInterval);
+      document.getElementById('host-dashboard').classList.add('hidden');
+      document.getElementById('host-winner-modal').classList.remove('hidden');
 
-        hostState.status = 'FINISHED';
-        document.getElementById('host-dashboard').classList.add('hidden');
-        document.getElementById('host-winner-modal').classList.remove('hidden');
-
-        document.getElementById('winner-subtitle').innerText = 'Permainan Dihentikan oleh Host';
-        document.getElementById('winner-name').innerText = 'Tidak Ada Pemenang';
-        document.getElementById('winner-secret-code').innerText = hostState.secretCode;
-
-        broadcastMsg('GAME_OVER', {
-          pin: hostState.pin,
-          winner: null,
-          secretCode: hostState.secretCode,
-          reason: 'HOST_TERMINATED'
-        });
-      }
-    }
-
-    function resetToLobby() {
-      createNewGame();
+      document.getElementById('winner-subtitle').innerText = 'Permainan Dihentikan oleh Host';
+      document.getElementById('winner-name').innerText = 'Tidak Ada Pemenang';
+      document.getElementById('winner-secret-code').innerText = hostState.secretCode;
     }
 
     // ==========================================
-    // PLAYER ENGINE
+    // PLAYER ENGINE (FIREBASE SYNCHRONIZED)
     // ==========================================
+    function clearPlayerSubscriptions() {
+      playerState.unsubs.forEach(unsub => unsub());
+      playerState.unsubs = [];
+    }
+
     function showPlayerScreen(screenId) {
       ['player-join', 'player-waiting', 'player-gameplay', 'player-end-screen'].forEach(id => {
         document.getElementById(id).classList.add('hidden');
@@ -1047,15 +1160,28 @@
       document.getElementById(screenId).classList.remove('hidden');
     }
 
-    function joinGame(e) {
+    async function joinGamePlayer(e) {
       e.preventDefault();
       playSound('click');
+
+      if (!window.FB.db) {
+        openFirebaseConfigModal();
+        return;
+      }
 
       const pinInput = document.getElementById('input-pin').value.trim();
       const nickInput = document.getElementById('input-nickname').value.trim();
 
       if (!pinInput || !nickInput) return;
 
+      // Check Room existence in Firebase
+      const roomSnapshot = await window.FB.get(window.FB.ref(window.FB.db, 'rooms/' + pinInput));
+      if (!roomSnapshot.exists()) {
+        showPlayerError('PIN Game tidak ditemukan!');
+        return;
+      }
+
+      const roomData = roomSnapshot.val();
       playerState.pin = pinInput;
       playerState.nickname = nickInput;
       playerState.history = [];
@@ -1064,72 +1190,71 @@
       document.getElementById('player-nick-display').innerText = nickInput;
       document.getElementById('player-game-nick').innerText = nickInput;
 
+      // Register player in Firebase Room
+      const playerRef = window.FB.ref(window.FB.db, `rooms/${pinInput}/players/${playerState.playerId}`);
+      window.FB.set(playerRef, {
+        id: playerState.playerId,
+        nickname: nickInput,
+        joinedAt: Date.now()
+      });
+
+      // Cleanup on disconnect
+      window.FB.onDisconnect(playerRef).remove();
+
       showPlayerScreen('player-waiting');
 
-      // Send Join Request to Host
-      broadcastMsg('PLAYER_JOIN_REQUEST', {
-        pin: playerState.pin,
-        nickname: playerState.nickname,
-        playerId: playerState.playerId
+      // Listen to Room Changes via Firebase
+      clearPlayerSubscriptions();
+      const roomRef = window.FB.ref(window.FB.db, 'rooms/' + pinInput);
+      let lastSessionNum = 1;
+
+      const unsubRoom = window.FB.onValue(roomRef, (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+
+        // Session update
+        if (data.sessionNum !== lastSessionNum) {
+          lastSessionNum = data.sessionNum;
+          playerState.hasSubmittedThisSession = false;
+          playerState.currentDigits = [];
+          updateDigitSlotsUI();
+          document.getElementById('btn-submit-guess').disabled = false;
+          document.getElementById('btn-submit-guess').innerText = 'KIRIM TEBAKAN';
+        }
+
+        // Timer update
+        if (data.timeLeft !== undefined) {
+          updatePlayerTimerUI(data.timeLeft);
+        }
+
+        // Status flow
+        if (data.status === 'PLAYING') {
+          showPlayerScreen('player-gameplay');
+        } else if (data.status === 'FINISHED') {
+          showPlayerScreen('player-end-screen');
+          document.getElementById('player-end-secret').innerText = data.secretCode || '----';
+
+          if (data.winner === playerState.nickname) {
+            playSound('win');
+            confetti({ particleCount: 100, spread: 70 });
+            document.getElementById('player-end-icon').innerText = '🎉🏆';
+            document.getElementById('player-end-title').innerText = 'KAMU MENANG!';
+            document.getElementById('player-end-msg').innerText = 'Selamat! Tebakanmu berhasil menemukan 4 Bulls!';
+          } else {
+            document.getElementById('player-end-icon').innerText = '🏁';
+            document.getElementById('player-end-title').innerText = 'Game Selesai!';
+            document.getElementById('player-end-msg').innerText = data.winner ? `Pemenangnya adalah ${data.winner}` : 'Permainan telah diakhiri.';
+          }
+        }
       });
+
+      playerState.unsubs.push(unsubRoom);
     }
 
     function leavePlayerGame() {
       playSound('click');
-      playerState.joined = false;
+      clearPlayerSubscriptions();
       showPlayerScreen('player-join');
-    }
-
-    function handlePlayerChannelEvents(type, data) {
-      if (data.pin !== playerState.pin) return;
-
-      if (type === 'PLAYER_JOIN_RESPONSE') {
-        if (data.playerId === playerState.playerId && data.success) {
-          playerState.joined = true;
-          if (data.status === 'PLAYING') {
-            showPlayerScreen('player-gameplay');
-          }
-        }
-      } else if (type === 'GAME_STARTED' || type === 'NEW_SESSION_STARTED') {
-        playerState.hasSubmittedThisSession = false;
-        playerState.currentDigits = [];
-        updateDigitSlotsUI();
-
-        showPlayerScreen('player-gameplay');
-        document.getElementById('btn-submit-guess').disabled = false;
-        document.getElementById('btn-submit-guess').innerText = 'KIRIM TEBAKAN';
-
-        updatePlayerTimerUI(data.timeLeft || 15);
-      } else if (type === 'TIMER_TICK') {
-        updatePlayerTimerUI(data.timeLeft);
-      } else if (type === 'GUESS_EVALUATION_RESULT') {
-        if (data.playerId === playerState.playerId) {
-          playSound('click');
-          // Add to player private history
-          playerState.history.unshift({
-            guess: data.guess,
-            bulls: data.bulls,
-            cows: data.cows,
-            sessionNum: data.sessionNum
-          });
-          renderPlayerHistory();
-        }
-      } else if (type === 'GAME_OVER') {
-        showPlayerScreen('player-end-screen');
-        document.getElementById('player-end-secret').innerText = data.secretCode;
-
-        if (data.winner === playerState.nickname) {
-          playSound('win');
-          confetti({ particleCount: 100, spread: 70 });
-          document.getElementById('player-end-icon').innerText = '🎉🏆';
-          document.getElementById('player-end-title').innerText = 'KAMU MENANG!';
-          document.getElementById('player-end-msg').innerText = 'Selamat! Tebakanmu berhasil menemukan 4 Bulls!';
-        } else {
-          document.getElementById('player-end-icon').innerText = '🏁';
-          document.getElementById('player-end-title').innerText = 'Game Selesai!';
-          document.getElementById('player-end-msg').innerText = data.winner ? `Pemenangnya adalah ${data.winner}` : 'Permainan telah diakhiri.';
-        }
-      }
     }
 
     function updatePlayerTimerUI(seconds) {
@@ -1191,7 +1316,7 @@
       document.getElementById('player-error-msg').classList.add('hidden');
     }
 
-    function submitGuessPlayer() {
+    async function submitGuessPlayer() {
       if (playerState.currentDigits.length !== 4) {
         showPlayerError('Masukkan 4 digit angka unik terlebih dahulu!');
         return;
@@ -1204,13 +1329,42 @@
 
       const guessStr = playerState.currentDigits.join('');
 
-      // Send to Host
-      broadcastMsg('SUBMIT_GUESS_REQUEST', {
-        pin: playerState.pin,
+      // Fetch room secret code to evaluate locally & push result
+      const roomSnapshot = await window.FB.get(window.FB.ref(window.FB.db, 'rooms/' + playerState.pin));
+      if (!roomSnapshot.exists()) return;
+
+      const roomData = roomSnapshot.val();
+      const evaluation = evaluateGuess(roomData.secretCode, guessStr);
+
+      // Push guess to Firebase
+      const guessesRef = window.FB.ref(window.FB.db, `rooms/${playerState.pin}/guesses`);
+      window.FB.push(guessesRef, {
         playerId: playerState.playerId,
         nickname: playerState.nickname,
-        guess: guessStr
+        guess: guessStr,
+        bulls: evaluation.bulls,
+        cows: evaluation.cows,
+        sessionNum: roomData.sessionNum || 1,
+        timestamp: Date.now()
       });
+
+      // Private local history
+      playerState.history.unshift({
+        guess: guessStr,
+        bulls: evaluation.bulls,
+        cows: evaluation.cows,
+        sessionNum: roomData.sessionNum || 1
+      });
+      renderPlayerHistory();
+
+      // Check if won
+      if (evaluation.bulls === 4) {
+        // Trigger winner in Firebase
+        window.FB.update(window.FB.ref(window.FB.db, 'rooms/' + playerState.pin), {
+          status: 'FINISHED',
+          winner: playerState.nickname
+        });
+      }
 
       document.getElementById('btn-submit-guess').disabled = true;
       document.getElementById('btn-submit-guess').innerText = 'TEBAKAN TERKIRIM ✓';
@@ -1247,7 +1401,7 @@
 
     function resetPlayerToHome() {
       playSound('click');
-      playerState.joined = false;
+      clearPlayerSubscriptions();
       playerState.history = [];
       playerState.currentDigits = [];
       showPlayerScreen('player-join');
