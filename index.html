@@ -491,13 +491,8 @@
             TEBAK 4 DIGIT ANGKA UNIK
           </span>
           
-          <!-- Dynamic Slot Displays -->
-          <div id="digit-slots-container" class="flex justify-center gap-2 mb-4">
-            <div id="digit-0" class="w-12 h-14 bg-black/50 border-2 border-white/20 rounded-xl flex items-center justify-center font-fredoka text-3xl text-amber-300"></div>
-            <div id="digit-1" class="w-12 h-14 bg-black/50 border-2 border-white/20 rounded-xl flex items-center justify-center font-fredoka text-3xl text-amber-300"></div>
-            <div id="digit-2" class="w-12 h-14 bg-black/50 border-2 border-white/20 rounded-xl flex items-center justify-center font-fredoka text-3xl text-amber-300"></div>
-            <div id="digit-3" class="w-12 h-14 bg-black/50 border-2 border-white/20 rounded-xl flex items-center justify-center font-fredoka text-3xl text-amber-300"></div>
-          </div>
+          <!-- Dynamic Slot Displays (Populated automatically by JS based on digitMode) -->
+          <div id="digit-slots-container" class="flex justify-center gap-2 mb-4"></div>
 
           <!-- Error Alert Banner -->
           <div id="player-error-msg" class="hidden text-xs bg-red-500/20 text-red-300 border border-red-500/40 rounded-xl p-2 mb-3">
@@ -829,9 +824,10 @@
         hostState.secretCode = generateSecretCode(hostState.digitMode);
         document.getElementById('host-secret-display').innerText = hostState.isSecretVisible ? hostState.secretCode : '?'.repeat(hostState.digitMode);
         
-        // Update in Firebase
+        // Update digitMode & digitCount in Firebase Room
         window.FB.update(window.FB.ref(window.FB.db, 'rooms/' + hostState.pin), {
           digitMode: hostState.digitMode,
+          digitCount: hostState.digitMode,
           secretCode: hostState.secretCode
         });
       }
@@ -867,11 +863,12 @@
       document.getElementById('host-dashboard').classList.add('hidden');
       document.getElementById('host-winner-modal').classList.add('hidden');
 
-      // Initialize Room in Firebase
+      // Initialize Room in Firebase with synchronized digitMode & digitCount
       const roomRef = window.FB.ref(window.FB.db, 'rooms/' + hostState.pin);
       window.FB.set(roomRef, {
         pin: hostState.pin,
         digitMode: hostState.digitMode,
+        digitCount: hostState.digitMode,
         secretCode: hostState.secretCode,
         status: 'LOBBY',
         sessionNum: 1,
@@ -1139,12 +1136,15 @@
       const roomData = roomSnapshot.val();
       playerState.pin = pinInput;
       playerState.nickname = nickInput;
-      playerState.digitMode = roomData.digitMode || 4;
+      playerState.digitMode = roomData.digitMode || roomData.digitCount || 4;
       playerState.history = [];
       playerState.currentDigits = [];
 
       document.getElementById('player-nick-display').innerText = nickInput;
       document.getElementById('player-game-nick').innerText = nickInput;
+
+      // Dynamically generate 3 or 4 input slots
+      setupPlayerDigitSlotsUI();
 
       // Register player
       const playerRef = window.FB.ref(window.FB.db, `rooms/${pinInput}/players/${playerState.playerId}`);
@@ -1167,9 +1167,13 @@
         const data = snapshot.val();
         if (!data) return;
 
-        // Sync Digit Mode
-        playerState.digitMode = data.digitMode || 4;
-        setupPlayerDigitSlotsUI();
+        // Sync Digit Mode dynamically from Firebase
+        const newDigitMode = data.digitMode || data.digitCount || 4;
+        if (playerState.digitMode !== newDigitMode) {
+          playerState.digitMode = newDigitMode;
+          playerState.currentDigits = [];
+          setupPlayerDigitSlotsUI();
+        }
 
         // Session update
         if (data.sessionNum !== lastSessionNum) {
@@ -1212,47 +1216,18 @@
 
     function setupPlayerDigitSlotsUI() {
       const title = document.getElementById('player-digit-title');
-      const digit3Slot = document.getElementById('digit-3');
-
       title.innerText = `TEBAK ${playerState.digitMode} DIGIT ANGKA UNIK`;
 
-      if (playerState.digitMode === 3) {
-        digit3Slot.classList.add('hidden');
-      } else {
-        digit3Slot.classList.remove('hidden');
+      const container = document.getElementById('digit-slots-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      for (let i = 0; i < playerState.digitMode; i++) {
+        const slot = document.createElement('div');
+        slot.id = `digit-${i}`;
+        slot.className = "w-12 h-14 bg-black/50 border-2 border-white/20 rounded-xl flex items-center justify-center font-fredoka text-3xl text-amber-300 shadow-inner";
+        container.appendChild(slot);
       }
-    }
-
-    function leavePlayerGame() {
-      playSound('click');
-      clearPlayerSubscriptions();
-      showPlayerScreen('player-join');
-    }
-
-    function updatePlayerTimerUI(seconds) {
-      const timerEl = document.getElementById('player-timer');
-      timerEl.innerText = `${seconds}s`;
-
-      if (seconds <= 0) {
-        document.getElementById('btn-submit-guess').disabled = true;
-        document.getElementById('btn-submit-guess').innerText = 'WAKTU SESI HABIS';
-      }
-    }
-
-    // Touch Numpad
-    function pressNumpad(numStr) {
-      playSound('click');
-      if (playerState.hasSubmittedThisSession) return;
-      if (playerState.currentDigits.length >= playerState.digitMode) return;
-
-      if (playerState.currentDigits.includes(numStr)) {
-        showPlayerError('Angka tidak boleh kembar!');
-        return;
-      } else {
-        hidePlayerError();
-      }
-
-      playerState.currentDigits.push(numStr);
       updateDigitSlotsUI();
     }
 
