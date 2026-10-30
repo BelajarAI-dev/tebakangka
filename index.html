@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>LKMM POLTERA Tebak angka Live - Posisi & Angka</title>
+  <title>Bulls & Cows Live - Posisi & Angka</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -18,6 +18,7 @@
 
   <!-- Firebase Compat Libraries -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
   <!-- Canvas Confetti -->
@@ -123,6 +124,11 @@
         <span class="hidden sm:inline text-xs font-bold">Suara</span>
       </button>
 
+      <button id="btn-host-logout" onclick="handleHostLogout()" class="hidden px-3 py-2 rounded-xl bg-rose-600/80 hover:bg-rose-500 text-xs font-bold transition flex items-center gap-2 border border-rose-400/40 text-white">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span class="hidden sm:inline">Keluar Host</span>
+      </button>
+
       <button onclick="showScreen('screen-role-select')" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold transition flex items-center gap-2 border border-white/10">
         <i class="fa-solid fa-house"></i>
         <span class="hidden sm:inline">Menu Utama</span>
@@ -184,6 +190,39 @@
       </div>
     </section>
 
+    <!-- ==================== SCREEN 0B: HOST LOGIN ==================== -->
+    <section id="screen-host-login" class="w-full max-w-md flex flex-col items-center justify-center hidden animate-slide-in">
+      <div class="w-full bg-slate-800/95 border-4 border-purple-500/50 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl text-center">
+        <div class="w-16 h-16 rounded-2xl bg-purple-600/30 border-2 border-purple-400 flex items-center justify-center text-3xl mx-auto mb-3">
+          🔒
+        </div>
+        <h3 class="text-2xl sm:text-3xl font-black fredoka text-purple-200 mb-1">LOGIN HOST (PANITIA)</h3>
+        <p class="text-xs text-slate-300 mb-6">Masukkan email dan password panitia terdaftar</p>
+
+        <form onsubmit="handleHostLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-left text-xs font-bold uppercase text-slate-300 mb-1">EMAIL PANITIA</label>
+            <input id="input-host-email" type="email" required placeholder="panitia@lkmm.com" class="w-full py-3 px-4 rounded-2xl bg-slate-900 border-2 border-slate-600 focus:border-purple-400 text-white font-semibold outline-none transition text-sm">
+          </div>
+
+          <div>
+            <label class="block text-left text-xs font-bold uppercase text-slate-300 mb-1">PASSWORD</label>
+            <input id="input-host-password" type="password" required placeholder="••••••••" class="w-full py-3 px-4 rounded-2xl bg-slate-900 border-2 border-slate-600 focus:border-purple-400 text-white font-semibold outline-none transition text-sm">
+          </div>
+
+          <p id="host-login-error" class="text-xs font-bold text-rose-400 min-h-[1rem]"></p>
+
+          <button type="submit" class="btn-kahoot w-full py-3.5 px-6 bg-purple-600 hover:bg-purple-500 font-black fredoka text-lg rounded-2xl shadow-lg border-b-4 border-purple-800 text-white">
+            <i class="fa-solid fa-right-to-bracket mr-1"></i> MASUK SEBAGAI HOST
+          </button>
+        </form>
+
+        <button onclick="showScreen('screen-role-select')" class="mt-4 text-xs font-bold text-slate-400 hover:text-slate-200 transition">
+          <i class="fa-solid fa-arrow-left mr-1"></i> Kembali ke Pilihan Peran
+        </button>
+      </div>
+    </section>
+
     <!-- ==================== SCREEN 1: HOST SETUP & LOBBY ==================== -->
     <section id="screen-host-lobby" class="w-full max-w-4xl flex flex-col items-center justify-center hidden animate-slide-in">
       
@@ -196,7 +235,7 @@
           <button id="btn-mode-3" onclick="selectDigitMode(3)" class="py-4 px-4 rounded-2xl border-4 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 flex flex-col items-center gap-1 transition">
             <span class="text-3xl">3️⃣</span>
             <span class="text-lg">3 DIGIT</span>
-            <span class="text-[10px] opacity-80">3 Angka Unik</span>
+            <span class="text-[10px] opacity-80">3 Angka Unik (Default)</span>
           </button>
 
           <button id="btn-mode-4" onclick="selectDigitMode(4)" class="py-4 px-4 rounded-2xl border-4 border-slate-600 bg-slate-700/40 font-bold fredoka text-slate-400 flex flex-col items-center gap-1 transition">
@@ -518,7 +557,7 @@
 
   <!-- FOOTER -->
   <footer class="w-full py-3 px-4 text-center text-xs text-slate-400 border-t border-white/5 bg-slate-950/60 backdrop-blur-md">
-    LKMM TD POLTERA &copy; 2026 Tebak Angka Live - Game Edukasi Interaktif Berbasis Firebase Realtime
+    LKMM TD POLTERA &copy; 2026 Bulls & Cows Live - Game Edukasi Interaktif Berbasis Firebase Realtime
   </footer>
 
 
@@ -543,12 +582,13 @@
       firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.database();
+    const auth = firebase.auth();
 
     /* =========================================================================
        2. GLOBAL STATE & VARIABLES
        ========================================================================= */
     let isSoundOn = true;
-    let selectedDigitMode = 4;
+    let selectedDigitMode = 3; // Default set to 3 digits
     let currentRoomPin = null;
     let isHost = false;
     let localPlayerId = 'player_' + Math.random().toString(36).substr(2, 9);
@@ -561,6 +601,16 @@
     let hasSubmittedThisSession = false;
     let roomRef = null;
     let guessesRef = null;
+
+    // Listen to Firebase Auth state
+    auth.onAuthStateChanged((user) => {
+      const logoutBtn = document.getElementById('btn-host-logout');
+      if (user) {
+        if (logoutBtn) logoutBtn.classList.remove('hidden');
+      } else {
+        if (logoutBtn) logoutBtn.classList.add('hidden');
+      }
+    });
 
     /* =========================================================================
        3. WEB AUDIO SYNTHESIZER
@@ -635,6 +685,7 @@
       playSound('click');
       const screens = [
         'screen-role-select',
+        'screen-host-login',
         'screen-host-lobby',
         'screen-host-dashboard',
         'screen-player-join',
@@ -690,10 +741,58 @@
        6. HOST LOGIC
        ========================================================================= */
     function initHostSetup() {
+      const user = auth.currentUser;
+      if (!user) {
+        showScreen('screen-host-login');
+        document.getElementById('host-login-error').innerText = '';
+        return;
+      }
+
       isHost = true;
+      selectDigitMode(3); // Ensure default 3-digit selection
       showScreen('screen-host-lobby');
       document.getElementById('host-setup-card').classList.remove('hidden');
       document.getElementById('host-active-lobby').classList.add('hidden');
+    }
+
+    function handleHostLogin(e) {
+      e.preventDefault();
+      playSound('click');
+
+      const email = document.getElementById('input-host-email').value.trim();
+      const password = document.getElementById('input-host-password').value.trim();
+      const errorEl = document.getElementById('host-login-error');
+
+      errorEl.innerText = 'Memverifikasi akun panitia...';
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          errorEl.innerText = '';
+          isHost = true;
+          selectDigitMode(3);
+          showScreen('screen-host-lobby');
+          document.getElementById('host-setup-card').classList.remove('hidden');
+          document.getElementById('host-active-lobby').classList.add('hidden');
+        })
+        .catch((error) => {
+          console.error("Login Error:", error);
+          let msg = 'Gagal login. Periksa email & password Anda!';
+          if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            msg = 'Email atau password panitia tidak sesuai!';
+          } else if (error.code === 'auth/invalid-email') {
+            msg = 'Format email tidak valid!';
+          }
+          errorEl.innerText = msg;
+        });
+    }
+
+    function handleHostLogout() {
+      if (confirm('Apakah Anda yakin ingin keluar dari akun Host?')) {
+        auth.signOut().then(() => {
+          isHost = false;
+          showScreen('screen-role-select');
+        });
+      }
     }
 
     function selectDigitMode(mode) {
