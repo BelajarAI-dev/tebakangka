@@ -342,13 +342,12 @@
           </span>
         </div>
 
-        <!-- TABLE HEADER -->
+        <!-- TABLE HEADER (HIDE POSISI BENAR FOR HOST PROYEKTOR FEED) -->
         <div class="grid grid-cols-12 gap-2 px-4 py-2 bg-slate-950/60 rounded-xl font-bold text-xs text-slate-400 uppercase tracking-wider mb-2 text-center">
-          <div class="col-span-1">SESI</div>
+          <div class="col-span-2">SESI</div>
           <div class="col-span-4 text-left">NICKNAME</div>
           <div class="col-span-3">TEBAKAN</div>
-          <div class="col-span-2 text-emerald-400">POSISI BENAR</div>
-          <div class="col-span-2 text-cyan-400">ANGKA BENAR</div>
+          <div class="col-span-3 text-cyan-400">ANGKA BENAR</div>
         </div>
 
         <!-- FIFO CONTAINER FOR 10 ROWS -->
@@ -547,9 +546,24 @@
           </div>
         </div>
 
-        <button onclick="showScreen('screen-role-select')" class="btn-kahoot px-8 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black fredoka text-xl rounded-2xl shadow-xl border-b-4 border-amber-700">
-          MAIN LAGI (KEMBALI KE MENU)
-        </button>
+        <!-- FINISHED ACTIONS FOR HOST VS PLAYER -->
+        <div id="finished-host-actions" class="hidden flex flex-col sm:flex-row gap-3 justify-center items-center">
+          <button onclick="restartGameAsHost()" class="btn-kahoot px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black fredoka text-xl rounded-2xl shadow-xl border-b-4 border-emerald-700">
+            <i class="fa-solid fa-rotate-right mr-2"></i> MAIN ULANG (RESET GAME)
+          </button>
+          <button onclick="showScreen('screen-role-select')" class="btn-kahoot px-6 py-4 bg-slate-700 hover:bg-slate-600 text-white font-bold fredoka text-base rounded-2xl border-b-4 border-slate-900">
+            MENU UTAMA
+          </button>
+        </div>
+
+        <div id="finished-player-actions" class="hidden flex flex-col gap-3 items-center">
+          <div class="p-3.5 px-6 rounded-2xl bg-slate-800/90 border border-amber-400/40 text-amber-300 font-bold text-sm animate-pulse">
+            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Menunggu Host Memulai Game Baru...
+          </div>
+          <button onclick="showScreen('screen-role-select')" class="text-xs font-bold text-slate-400 hover:text-slate-200 transition">
+            <i class="fa-solid fa-house mr-1"></i> Keluar ke Menu Utama
+          </button>
+        </div>
       </div>
     </section>
 
@@ -914,6 +928,35 @@
       startHostTimer();
     }
 
+    function restartGameAsHost() {
+      if (!currentRoomPin) return;
+      playSound('click');
+
+      const newSecretCode = generateSecretCode(selectedDigitMode);
+      currentSecretCode = newSecretCode;
+      currentSessionNumber = 1;
+
+      if (activeTimerInterval) clearInterval(activeTimerInterval);
+
+      // Clear previous guesses in Firebase
+      db.ref(`rooms/${currentRoomPin}/guesses`).remove();
+
+      // Reset room state in Firebase
+      roomRef.update({
+        status: 'LOBBY',
+        secretCode: newSecretCode,
+        sessionNumber: 1,
+        timer: 15,
+        sessionActive: false,
+        winner: null
+      });
+
+      // Show Host Lobby screen
+      showScreen('screen-host-lobby');
+      document.getElementById('host-setup-card').classList.add('hidden');
+      document.getElementById('host-active-lobby').classList.remove('hidden');
+    }
+
     function endHostGameConfirm() {
       if (confirm('Apakah Anda yakin ingin mengakhiri permainan sekarang?')) {
         if (activeTimerInterval) clearInterval(activeTimerInterval);
@@ -929,7 +972,7 @@
     }
 
     /* =========================================================================
-       7. HOST LIVE FEED (STRICT 10-ROW FIFO LIMIT)
+       7. HOST LIVE FEED (STRICT 10-ROW FIFO LIMIT & POSISI BENAR HIDDEN)
        ========================================================================= */
     function listenHostFeed() {
       guessesRef = db.ref(`rooms/${currentRoomPin}/guesses`);
@@ -956,19 +999,14 @@
 
         container.innerHTML = feed10.map((g) => `
           <div class="grid grid-cols-12 gap-2 px-4 py-3 bg-slate-800/90 hover:bg-slate-800 border border-white/10 rounded-2xl items-center text-center font-bold text-sm animate-slide-in">
-            <div class="col-span-1 text-cyan-400 font-extrabold text-xs">#${g.sessionNumber || 1}</div>
+            <div class="col-span-2 text-cyan-400 font-extrabold text-xs">#${g.sessionNumber || 1}</div>
             <div class="col-span-4 text-left text-amber-300 font-extrabold truncate flex items-center gap-1.5">
               <i class="fa-solid fa-user-circle text-purple-400"></i> ${escapeHtml(g.nickname)}
             </div>
             <div class="col-span-3 font-black text-white text-base tracking-widest bg-slate-950/60 py-1 rounded-xl border border-white/5">
               ${g.guess}
             </div>
-            <div class="col-span-2">
-              <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-black text-xs">
-                ${g.posisiBenar}
-              </span>
-            </div>
-            <div class="col-span-2">
+            <div class="col-span-3">
               <span class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-black text-xs">
                 ${g.angkaBenar}
               </span>
@@ -1063,7 +1101,19 @@
           }
         }
 
-        if (room.status === 'PLAYING') {
+        if (room.status === 'LOBBY') {
+          currentSessionNumber = 1;
+          hasSubmittedThisSession = false;
+          currentInputDigits = [];
+
+          // Auto-return player to waiting screen when room resets to LOBBY
+          const activeSec = document.querySelector('main > section:not(.hidden)');
+          const currentScreenId = activeSec ? activeSec.id : '';
+          if (currentScreenId === 'screen-player-gameplay' || currentScreenId === 'screen-finished') {
+            showScreen('screen-player-waiting');
+            document.getElementById('wait-player-name').innerText = 'Nickname: ' + localPlayerNickname;
+          }
+        } else if (room.status === 'PLAYING') {
           const gameplayScreen = document.getElementById('screen-player-gameplay');
           if (gameplayScreen.classList.contains('hidden')) {
             showScreen('screen-player-gameplay');
@@ -1304,6 +1354,17 @@
 
       document.getElementById('winner-name-display').innerText = winnerNickname;
       document.getElementById('revealed-secret-code').innerText = (secretCode || currentSecretCode).split('').join(' ');
+
+      const hostActions = document.getElementById('finished-host-actions');
+      const playerActions = document.getElementById('finished-player-actions');
+
+      if (isHost) {
+        if (hostActions) hostActions.classList.remove('hidden');
+        if (playerActions) playerActions.classList.add('hidden');
+      } else {
+        if (hostActions) hostActions.classList.add('hidden');
+        if (playerActions) playerActions.classList.remove('hidden');
+      }
 
       try {
         confetti({
