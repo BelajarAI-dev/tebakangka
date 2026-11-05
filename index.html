@@ -49,7 +49,7 @@
       transition: all 0.1s ease;
       box-shadow: 0 4px 0 rgba(0,0,0,0.25);
     }
-    .keypad-btn:active {
+    .keypad-btn:active:not(:disabled) {
       transform: translateY(3px);
       box-shadow: 0 1px 0 rgba(0,0,0,0.25);
     }
@@ -333,13 +333,13 @@
           </p>
         </div>
 
-        <!-- LIVE FEED TABLE (MAX 10 ROWS - FIFO) -->
+        <!-- LIVE FEED TABLE (MAX 10 ROWS - NEWEST AT TOP) -->
         <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-2xl backdrop-blur-xl space-y-4">
           <div class="flex justify-between items-center">
             <h3 class="fredoka text-lg font-bold text-white flex items-center gap-2">
               <i class="fa-solid fa-list-ol text-indigo-400"></i> Papan Tebakan Peserta (10 Terbaru)
             </h3>
-            <span class="text-[11px] text-slate-400 italic">Terurut dari yang pertama kirim</span>
+            <span class="text-[11px] text-slate-400 italic">Terurut dari yang paling baru kirim (Atas)</span>
           </div>
 
           <div class="overflow-x-auto">
@@ -533,7 +533,7 @@
 
   <!-- APPLICATION LOGIC JS -->
   <script>
-    // 1. MANDATORY HARDCODED FIREBASE CONFIGURATION
+    // 1. HARDCODED FIREBASE CONFIGURATION
     const firebaseConfig = {
       apiKey: "AIzaSyCYJ0DVl3_C0otcUYJ7h38rRXGB_M5eN2g",
       authDomain: "icebreaking-57186.firebaseapp.com",
@@ -569,6 +569,7 @@
     let localPlayerNickname = '';
     let currentInputDigits = [];
     let playerSubmittedSessions = {};
+    let lastKnownRoomSecret = null; // Track game reset/restart
 
     // Web Audio Synthesizer for SFX
     function playSound(type) {
@@ -752,6 +753,7 @@
         timer: 15,
         lowerBound: 0,
         upperBound: selectedBoomRange,
+        guesses: null,
         createdAt: firebase.database.ServerValue.TIMESTAMP
       };
 
@@ -812,7 +814,8 @@
       db.ref(`rooms/${currentRoomPin}`).update({
         status: 'PLAYING',
         sessionNumber: 1,
-        timer: 15
+        timer: 15,
+        guesses: null
       }).then(() => {
         document.getElementById('host-subscreen-lobby').classList.add('hidden');
         document.getElementById('host-subscreen-playing').classList.remove('hidden');
@@ -854,6 +857,10 @@
           <th class="py-2.5 px-3 text-amber-400">STATUS & UMPAN BALIK</th>
         `;
       }
+
+      // Reset Table View & Reset Notification counter text
+      document.getElementById('host-submitted-count-text').innerText = `0 Peserta Sudah Mengirim Tebakan Sesi Ini`;
+      document.getElementById('host-table-tbody').innerHTML = `<tr><td colspan="4" class="py-4 text-slate-500 italic">Belum ada tebakan yang dikirim.</td></tr>`;
     }
 
     function startHostTimer() {
@@ -872,6 +879,8 @@
         if (hostCurrentTimer === 0) {
           clearInterval(hostTimerInterval);
           playSound('tick');
+          // CORRECTION 2: When timer reaches 0s, reset live submission counter notification to 0!
+          document.getElementById('host-submitted-count-text').innerText = `0 Peserta Sudah Mengirim Tebakan Sesi Ini`;
           // Delayed reveal on projector when timer reaches 0s!
           revealHostDashboardSessionResults();
         }
@@ -881,6 +890,7 @@
     function nextSessionAsHost() {
       hostSessionNumber++;
       document.getElementById('host-session-badge').innerText = `SESI #${hostSessionNumber}`;
+      document.getElementById('host-submitted-count-text').innerText = `0 Peserta Sudah Mengirim Tebakan Sesi Ini`;
       
       db.ref(`rooms/${currentRoomPin}`).update({
         sessionNumber: hostSessionNumber,
@@ -895,9 +905,13 @@
         const guesses = snapshot.val() || {};
         const guessArray = Object.values(guesses);
 
-        // Update live submission count text
-        const currentSessionGuesses = guessArray.filter(g => (g.sessionNumber || 1) === hostSessionNumber);
-        document.getElementById('host-submitted-count-text').innerText = `${currentSessionGuesses.length} Peserta Sudah Mengirim Tebakan Sesi Ini`;
+        // Update live submission count text during active timer
+        if (hostCurrentTimer > 0) {
+          const currentSessionGuesses = guessArray.filter(g => (g.sessionNumber || 1) === hostSessionNumber);
+          document.getElementById('host-submitted-count-text').innerText = `${currentSessionGuesses.length} Peserta Sudah Mengirim Tebakan Sesi Ini`;
+        } else {
+          document.getElementById('host-submitted-count-text').innerText = `0 Peserta Sudah Mengirim Tebakan Sesi Ini`;
+        }
 
         // Check if any player won
         const winner = guessArray.find(g => g.isWin === true);
@@ -913,17 +927,18 @@
       });
     }
 
+    // CORRECTION 1: Sort by timestamp DESCENDING so newest guess is at the VERY TOP!
     function revealHostDashboardSessionResults() {
       db.ref(`rooms/${currentRoomPin}`).once('value', snapshot => {
         const room = snapshot.val() || {};
         const guesses = room.guesses || {};
         let guessArray = Object.values(guesses);
 
-        // Sort by timestamp ascending
-        guessArray.sort((a,b) => (a.timestamp || 0) - (b.timestamp || 0));
+        // CORRECTION 1: Sort DESCENDING (newest first)
+        guessArray.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-        // Display latest 10 guesses (FIFO)
-        const feed10 = guessArray.slice(-10);
+        // Display top 10 newest guesses
+        const feed10 = guessArray.slice(0, 10);
 
         const tbody = document.getElementById('host-table-tbody');
         if (feed10.length === 0) {
@@ -1025,11 +1040,16 @@
       });
     }
 
+    // Host Reset Game & Clear History Total
     function restartGameAsHost() {
+      if (hostTimerInterval) clearInterval(hostTimerInterval);
+      hostSessionNumber = 1;
+
       let newSecret = selectedGameType === 'POSISI_BENAR' 
         ? generateUniqueCode(selectedDigitMode) 
         : generateSecretNumber(selectedBoomRange).toString();
 
+      // Clear guesses node in Firebase completely!
       db.ref(`rooms/${currentRoomPin}`).update({
         status: 'LOBBY',
         secretCode: newSecret,
@@ -1096,8 +1116,19 @@
         selectedDigitMode = room.digitMode || 3;
         selectedBoomRange = room.boomRange || 1000;
 
-        if (room.status === 'LOBBY' || room.status === 'WAITING') {
+        // Check if game was reset / restarted (secretCode changed or room set back to LOBBY)
+        if (room.secretCode !== lastKnownRoomSecret || room.status === 'LOBBY' || !room.guesses) {
+          lastKnownRoomSecret = room.secretCode;
           playerSubmittedSessions = {};
+          currentInputDigits = [];
+          // Clear player local history table
+          const playerTbody = document.getElementById('player-table-tbody');
+          if (playerTbody) {
+            playerTbody.innerHTML = `<tr><td colspan="4" class="py-4 text-slate-500 italic">Belum ada tebakan.</td></tr>`;
+          }
+        }
+
+        if (room.status === 'LOBBY' || room.status === 'WAITING') {
           showScreen('screen-player-waiting');
         } else if (room.status === 'PLAYING') {
           showScreen('screen-player-game');
@@ -1108,6 +1139,7 @@
       });
     }
 
+    // Player UI Update with Strict Keypad Disabling when Timer = 0s or Session Ended
     function updatePlayerGameplayUI(room) {
       const isPosisi = selectedGameType === 'POSISI_BENAR';
       document.getElementById('player-mode-badge').innerText = isPosisi ? `Posisi Benar (${selectedDigitMode}D)` : `Angka Boom (0-${selectedBoomRange})`;
@@ -1123,11 +1155,12 @@
       }
 
       const currentSess = room.sessionNumber || 1;
-      const timerVal = room.timer || 0;
+      const timerVal = room.timer !== undefined ? room.timer : 0;
       const hasSubmitted = !!playerSubmittedSessions[currentSess];
 
       const banner = document.getElementById('player-status-banner');
 
+      // Keypad locking conditions
       if (hasSubmitted) {
         banner.className = "p-3 rounded-xl text-center text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
         banner.innerText = `✅ TEBAKAN SESI #${currentSess} TERKIRIM! (1/1) - Menunggu Sesi Berikutnya`;
@@ -1135,7 +1168,7 @@
         disableKeypad(true);
       } else if (timerVal === 0) {
         banner.className = "p-3 rounded-xl text-center text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40";
-        banner.innerText = `🔒 SESI TERJEDA (0s) - Menunggu Host Melanjutkan Sesi`;
+        banner.innerText = `⛔ SESI BERAKHIR (0s) - Tombol Terkunci, Menunggu Host Melanjutkan Sesi`;
         banner.classList.remove('hidden');
         disableKeypad(true);
       } else {
@@ -1224,14 +1257,15 @@
       container.innerHTML = numpadHTML;
     }
 
+    // Strict Keypad Disable Helper
     function disableKeypad(disabled) {
       const btns = document.querySelectorAll('.keypad-btn');
       btns.forEach(b => {
         b.disabled = disabled;
         if (disabled) {
-          b.classList.add('opacity-40', 'cursor-not-allowed');
+          b.classList.add('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
         } else {
-          b.classList.remove('opacity-40', 'cursor-not-allowed');
+          b.classList.remove('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
         }
       });
     }
@@ -1271,7 +1305,7 @@
         if (!room) return;
 
         const currentSess = room.sessionNumber || 1;
-        const timerVal = room.timer || 0;
+        const timerVal = room.timer !== undefined ? room.timer : 0;
 
         if (playerSubmittedSessions[currentSess] || timerVal === 0) {
           document.getElementById('keypad-error-msg').innerText = 'Sesi ini sudah terkunci!';
