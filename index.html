@@ -2,672 +2,538 @@
 <html lang="id" class="h-full">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Tebak Angka Live - Game Platform (Kahoot Style)</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Posisi Benar & Angka Boom - Kahoot Style Game</title>
+  
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-
+  
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
-
-  <!-- FontAwesome Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-  <!-- Firebase Compat Libraries -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-
+  
   <!-- Canvas Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            fredoka: ['Fredoka', 'sans-serif'],
-            sans: ['Plus Jakarta Sans', 'sans-serif']
-          },
-          colors: {
-            kahoot: {
-              purple: '#46178f',
-              red: '#e21b3c',
-              blue: '#1368ce',
-              yellow: '#ffa602',
-              green: '#26890c',
-              dark: '#250850'
-            }
-          }
-        }
-      }
-    };
-  </script>
+  
+  <!-- QRCode.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  
+  <!-- Firebase JS SDK (v9 Compat Mode) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <style>
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background: radial-gradient(circle at top center, #3b0764, #1e1b4b, #0f172a);
-      background-attachment: fixed;
+      background: radial-gradient(circle at top left, #1e1b4b, #0f172a, #020617);
+      color: #f8fafc;
       user-select: none;
-      -webkit-user-select: none;
+    }
+    .fredoka { font-family: 'Fredoka', cursive; }
+    
+    .btn-3d {
+      transition: all 0.1s ease;
+      box-shadow: 0 6px 0 rgba(0,0,0,0.3);
+    }
+    .btn-3d:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 rgba(0,0,0,0.3);
     }
 
-    .fredoka {
-      font-family: 'Fredoka', sans-serif;
+    .keypad-btn {
+      transition: all 0.1s ease;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.25);
+    }
+    .keypad-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.25);
     }
 
-    .btn-kahoot {
-      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
+      50% { box-shadow: 0 0 35px rgba(168, 85, 247, 0.7); }
     }
-    .btn-kahoot:active:not(:disabled) {
-      transform: translateY(3px) !important;
-      box-shadow: none !important;
-    }
+    .pulse-glow { animation: pulseGlow 2.5s infinite; }
 
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
+    @keyframes bounceSlow {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
     }
-    ::-webkit-scrollbar-track {
-      background: rgba(15, 23, 42, 0.6);
-      border-radius: 8px;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.4);
-    }
+    .bounce-slow { animation: bounceSlow 2s infinite ease-in-out; }
 
-    @keyframes pulse-subtle {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.03); }
-    }
-    .animate-pulse-subtle {
-      animation: pulse-subtle 2s infinite ease-in-out;
-    }
-
-    @keyframes slide-in-top {
-      from { transform: translateY(-20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    .animate-slide-in {
-      animation: slide-in-top 0.3s ease-out forwards;
-    }
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.5); border-radius: 4px; }
   </style>
 </head>
-<body class="h-full text-white overflow-x-hidden flex flex-col justify-between">
+<body class="h-full flex flex-col min-h-screen">
 
-  <!-- TOP HEADER / BRAND BAR -->
-  <header class="w-full py-3 px-4 sm:px-8 bg-slate-900/80 backdrop-blur-md border-b border-white/10 flex justify-between items-center z-50">
-    <div class="flex items-center gap-3 cursor-pointer" onclick="showScreen('screen-role-select')">
-      <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-red-500 flex items-center justify-center font-bold text-slate-900 shadow-lg text-xl fredoka">
+  <!-- TOP HEADER NAVBAR -->
+  <header class="w-full bg-slate-900/80 backdrop-blur-md border-b border-slate-800 py-3 px-4 sm:px-8 flex justify-between items-center sticky top-0 z-50">
+    <div class="flex items-center gap-3 cursor-pointer" onclick="goToLandingScreen()">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-black text-xl shadow-lg">
         🎯
       </div>
       <div>
-        <h1 class="text-xl sm:text-2xl font-bold fredoka tracking-wide bg-gradient-to-r from-amber-300 via-pink-400 to-cyan-300 bg-clip-text text-transparent">
-          GAME PLATFORM INTERAKTIF
+        <h1 class="fredoka text-xl font-bold bg-gradient-to-r from-amber-300 via-pink-400 to-indigo-300 bg-clip-text text-transparent">
+          Posisi & Angka
         </h1>
-        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider hidden sm:block">Posisi Benar & Angka Boom (Kahoot Style)</p>
+        <p class="text-[10px] text-slate-400 tracking-wider">KAHOOT-STYLE MULTIPLAYER</p>
       </div>
     </div>
 
-    <!-- Mute / Sound Toggle & Role Switch -->
-    <div class="flex items-center gap-3">
-      <button id="btn-sound-toggle" onclick="toggleSound()" class="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-200 transition text-sm flex items-center gap-2">
-        <i id="sound-icon" class="fa-solid fa-volume-high text-amber-400"></i>
-        <span class="hidden sm:inline text-xs font-bold">Suara</span>
-      </button>
-
-      <button id="btn-host-logout" onclick="handleHostLogout()" class="hidden px-3 py-2 rounded-xl bg-rose-600/80 hover:bg-rose-500 text-xs font-bold transition flex items-center gap-2 border border-rose-400/40 text-white">
-        <i class="fa-solid fa-right-from-bracket"></i>
-        <span class="hidden sm:inline">Keluar Host</span>
-      </button>
-
-      <button onclick="showScreen('screen-role-select')" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold transition flex items-center gap-2 border border-white/10">
-        <i class="fa-solid fa-house"></i>
-        <span class="hidden sm:inline">Menu Utama</span>
+    <div id="nav-actions" class="flex items-center gap-3">
+      <span id="nav-room-badge" class="hidden px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold font-mono">
+        PIN: <span id="nav-pin-val">------</span>
+      </span>
+      <button id="btn-host-logout" onclick="handleHostLogout()" class="hidden px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-bold transition flex items-center gap-1.5">
+        <i class="fa-solid fa-right-from-bracket"></i> Keluar Host
       </button>
     </div>
   </header>
 
-  <!-- MAIN APP CONTAINER -->
-  <main class="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center items-center">
+  <!-- MAIN CONTAINER FOR VIEWS -->
+  <main class="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 flex flex-col items-center justify-center">
 
-    <!-- ==================== SCREEN 0: ROLE SELECT ==================== -->
-    <section id="screen-role-select" class="w-full max-w-3xl flex flex-col items-center justify-center py-6 animate-slide-in">
-      <div class="text-center mb-8">
-        <span class="px-4 py-1.5 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs sm:text-sm font-bold uppercase tracking-widest mb-3 inline-block">
-          Game Edukasi & Ice Breaking LKMM-TD
-        </span>
-        <h2 class="text-3xl sm:text-5xl font-black fredoka tracking-tight text-white mb-2">
-          PILIH PERAN ANDA
-        </h2>
-        <p class="text-slate-300 text-sm sm:text-base max-w-md mx-auto">
-          Pilih untuk mengendalikan game sebagai Host Proyektor atau ikut menebak sebagai Peserta!
-        </p>
+    <!-- VIEW 1: ROLE SELECTION LANDING SCREEN -->
+    <div id="screen-role-select" class="w-full max-w-md bg-slate-900/70 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl text-center space-y-6">
+      <div class="space-y-2">
+        <div class="inline-block p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-4xl mb-2 bounce-slow">
+          🎮
+        </div>
+        <h2 class="fredoka text-3xl font-extrabold text-white">Selamat Datang!</h2>
+        <p class="text-sm text-slate-400">Pilih peran Anda untuk memulai permainan interaktif.</p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-        <!-- CARD HOST -->
-        <div onclick="initHostSetup()" class="btn-kahoot bg-gradient-to-br from-purple-800 to-indigo-900 border-4 border-purple-500/50 rounded-3xl p-6 sm:p-8 text-center cursor-pointer hover:border-purple-400 transition shadow-2xl flex flex-col justify-between items-center group relative overflow-hidden">
-          <div class="absolute -right-6 -bottom-6 w-28 h-28 bg-purple-500/20 rounded-full blur-xl group-hover:scale-150 transition"></div>
-          <div class="w-20 h-20 rounded-2xl bg-purple-600/40 border-2 border-purple-400/50 flex items-center justify-center text-4xl mb-4 group-hover:rotate-6 transition">
-            📺
-          </div>
-          <div>
-            <h3 class="text-2xl font-bold fredoka text-purple-200 mb-2">Layar Host / Proyektor</h3>
-            <p class="text-xs sm:text-sm text-purple-300/80 mb-6">
-              Login panitia, pilih mode (Posisi Benar / Angka Boom), tampilkan PIN & QR, serta kelola timer sesi live.
-            </p>
-          </div>
-          <button class="w-full py-3.5 px-6 rounded-2xl bg-purple-500 hover:bg-purple-400 font-bold fredoka text-lg shadow-lg border-b-4 border-purple-700 active:border-b-0 text-white">
-            MASUK SEBAGAI HOST
-          </button>
-        </div>
+      <div class="space-y-4 pt-2">
+        <button onclick="goToPlayerJoin()" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold text-lg btn-3d flex items-center justify-center gap-3">
+          <i class="fa-solid fa-mobile-screen-button text-xl"></i> Layar Peserta (HP)
+        </button>
 
-        <!-- CARD PESERTA -->
-        <div onclick="showScreen('screen-player-join')" class="btn-kahoot bg-gradient-to-br from-blue-800 to-cyan-900 border-4 border-cyan-500/50 rounded-3xl p-6 sm:p-8 text-center cursor-pointer hover:border-cyan-400 transition shadow-2xl flex flex-col justify-between items-center group relative overflow-hidden">
-          <div class="absolute -right-6 -bottom-6 w-28 h-28 bg-cyan-500/20 rounded-full blur-xl group-hover:scale-150 transition"></div>
-          <div class="w-20 h-20 rounded-2xl bg-cyan-600/40 border-2 border-cyan-400/50 flex items-center justify-center text-4xl mb-4 group-hover:-rotate-6 transition">
-            📱
-          </div>
-          <div>
-            <h3 class="text-2xl font-bold fredoka text-cyan-200 mb-2">Layar Peserta / HP</h3>
-            <p class="text-xs sm:text-sm text-cyan-300/80 mb-6">
-              Masukkan Game PIN, kirim angka tebakan (1x per sesi), dan dapatkan hasil feedback langsung.
-            </p>
-          </div>
-          <button class="w-full py-3.5 px-6 rounded-2xl bg-cyan-500 hover:bg-cyan-400 font-bold fredoka text-lg shadow-lg border-b-4 border-cyan-700 active:border-b-0 text-white">
-            GABUNG GAME PESERTA
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== SCREEN 0B: HOST LOGIN ==================== -->
-    <section id="screen-host-login" class="w-full max-w-md flex flex-col items-center justify-center hidden animate-slide-in">
-      <div class="w-full bg-slate-800/95 border-4 border-purple-500/50 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl text-center">
-        <div class="w-16 h-16 rounded-2xl bg-purple-600/30 border-2 border-purple-400 flex items-center justify-center text-3xl mx-auto mb-3">
-          🔒
-        </div>
-        <h3 class="text-2xl sm:text-3xl font-black fredoka text-purple-200 mb-1">LOGIN HOST (PANITIA)</h3>
-        <p class="text-xs text-slate-300 mb-6">Masukkan email dan password panitia terdaftar</p>
-
-        <form onsubmit="handleHostLogin(event)" class="space-y-4">
-          <div>
-            <label class="block text-left text-xs font-bold uppercase text-slate-300 mb-1">EMAIL PANITIA</label>
-            <input id="input-host-email" type="email" required placeholder="panitia@lkmm.com" class="w-full py-3 px-4 rounded-2xl bg-slate-900 border-2 border-slate-600 focus:border-purple-400 text-white font-semibold outline-none transition text-sm">
-          </div>
-
-          <div>
-            <label class="block text-left text-xs font-bold uppercase text-slate-300 mb-1">PASSWORD</label>
-            <input id="input-host-password" type="password" required placeholder="••••••••" class="w-full py-3 px-4 rounded-2xl bg-slate-900 border-2 border-slate-600 focus:border-purple-400 text-white font-semibold outline-none transition text-sm">
-          </div>
-
-          <p id="host-login-error" class="text-xs font-bold text-rose-400 min-h-[1rem]"></p>
-
-          <button type="submit" class="btn-kahoot w-full py-3.5 px-6 bg-purple-600 hover:bg-purple-500 font-black fredoka text-lg rounded-2xl shadow-lg border-b-4 border-purple-800 text-white">
-            <i class="fa-solid fa-right-to-bracket mr-1"></i> MASUK SEBAGAI HOST
-          </button>
-        </form>
-
-        <button onclick="showScreen('screen-role-select')" class="mt-4 text-xs font-bold text-slate-400 hover:text-slate-200 transition">
-          <i class="fa-solid fa-arrow-left mr-1"></i> Kembali ke Pilihan Peran
+        <button onclick="goToHostAuthOrConfig()" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold text-lg btn-3d flex items-center justify-center gap-3">
+          <i class="fa-solid fa-display text-xl"></i> Layar Host (Proyektor)
         </button>
       </div>
-    </section>
+    </div>
 
-    <!-- ==================== SCREEN 1: HOST GAME SELECTION & LOBBY ==================== -->
-    <section id="screen-host-lobby" class="w-full max-w-4xl flex flex-col items-center justify-center hidden animate-slide-in">
-      
-      <!-- GAME TYPE SELECTOR (POST-LOGIN SETUP) -->
-      <div id="host-setup-card" class="w-full max-w-xl bg-slate-800/90 border-4 border-indigo-500/40 rounded-3xl p-6 sm:p-8 text-center shadow-2xl backdrop-blur-xl mb-6">
-        <h3 class="text-2xl font-bold fredoka text-amber-300 mb-1">PILIH MODE PERMAINAN HOST</h3>
-        <p class="text-xs sm:text-sm text-slate-300 mb-6">Pilih jenis game yang ingin dimainkan bersama peserta:</p>
-
-        <!-- GAME TYPE TABS -->
-        <div class="grid grid-cols-2 gap-3 mb-6">
-          <button id="tab-game-posisi" onclick="selectGameType('POSISI_BENAR')" class="py-3 px-4 rounded-2xl border-4 border-purple-500 bg-purple-600/30 font-bold fredoka text-purple-200 flex flex-col items-center gap-1 transition">
-            <span class="text-3xl">🎯</span>
-            <span class="text-base sm:text-lg">POSISI BENAR</span>
-            <span class="text-[10px] opacity-80">Bulls & Cows Logika</span>
-          </button>
-
-          <button id="tab-game-boom" onclick="selectGameType('ANGKA_BOOM')" class="py-3 px-4 rounded-2xl border-4 border-slate-700 bg-slate-800/50 font-bold fredoka text-slate-400 flex flex-col items-center gap-1 transition">
-            <span class="text-3xl">💣</span>
-            <span class="text-base sm:text-lg">ANGKA BOOM</span>
-            <span class="text-[10px] opacity-80">Jepitan Rentang Batas</span>
-          </button>
+    <!-- VIEW 2: HOST LOGIN SCREEN (FIREBASE AUTH) -->
+    <div id="screen-host-login" class="hidden w-full max-w-md bg-slate-900/70 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl space-y-6">
+      <div class="text-center space-y-2">
+        <div class="inline-block p-3 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 text-3xl mb-1">
+          <i class="fa-solid fa-lock"></i>
         </div>
-
-        <!-- SUB-OPTIONS FOR POSISI BENAR -->
-        <div id="options-posisi-benar" class="space-y-3 mb-6 p-4 bg-slate-900/60 rounded-2xl border border-white/5">
-          <label class="block text-xs font-bold text-slate-300 uppercase">JUMLAH DIGIT ANGKA RAHASIA:</label>
-          <div class="grid grid-cols-2 gap-3">
-            <button id="btn-mode-3" onclick="selectDigitMode(3)" class="py-3 px-3 rounded-xl border-2 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 text-sm">
-              3 Digit (Default)
-            </button>
-            <button id="btn-mode-4" onclick="selectDigitMode(4)" class="py-3 px-3 rounded-xl border-2 border-slate-600 bg-slate-800 font-bold fredoka text-slate-400 text-sm">
-              4 Digit
-            </button>
-          </div>
-        </div>
-
-        <!-- SUB-OPTIONS FOR ANGKA BOOM -->
-        <div id="options-angka-boom" class="space-y-3 mb-6 p-4 bg-slate-900/60 rounded-2xl border border-white/5 hidden">
-          <label class="block text-xs font-bold text-slate-300 uppercase">RENTANG ANGKA BOOM:</label>
-          <div class="grid grid-cols-3 gap-2">
-            <button id="btn-boom-100" onclick="selectBoomRange(100)" class="py-3 px-2 rounded-xl border-2 border-slate-600 bg-slate-800 font-bold fredoka text-slate-400 text-xs">
-              0 - 100
-            </button>
-            <button id="btn-boom-500" onclick="selectBoomRange(500)" class="py-3 px-2 rounded-xl border-2 border-slate-600 bg-slate-800 font-bold fredoka text-slate-400 text-xs">
-              0 - 500
-            </button>
-            <button id="btn-boom-1000" onclick="selectBoomRange(1000)" class="py-3 px-2 rounded-xl border-2 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 text-xs">
-              0 - 1000 (Default)
-            </button>
-          </div>
-        </div>
-
-        <button onclick="createHostRoom()" class="btn-kahoot w-full py-4 px-6 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 font-bold fredoka text-xl rounded-2xl shadow-xl border-b-4 border-emerald-800 text-white">
-          <i class="fa-solid fa-play-circle mr-2"></i> BUAT RUANGAN SEKARANG
-        </button>
+        <h2 class="fredoka text-2xl font-bold text-white">Autentikasi Host</h2>
+        <p class="text-xs text-slate-400">Masukkan email dan password terdaftar panitia.</p>
       </div>
 
-      <!-- ACTIVE LOBBY DISPLAY -->
-      <div id="host-active-lobby" class="w-full flex flex-col items-center hidden">
-        <div class="w-full bg-slate-900/90 border-4 border-purple-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl mb-6 text-center backdrop-blur-xl relative overflow-hidden">
-          
-          <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-            <!-- PIN DISPLAY -->
-            <div class="flex-1 text-center md:text-left">
-              <span class="px-3 py-1 rounded-full bg-purple-500/30 text-purple-300 text-xs font-bold uppercase tracking-wider">GAME PIN UTAMA</span>
-              <div id="display-game-pin" class="text-5xl sm:text-7xl font-black fredoka text-amber-400 tracking-widest my-2 select-all">
-                ------
-              </div>
-              <p class="text-xs sm:text-sm text-slate-300">
-                Mode Game: <span id="display-game-type-badge" class="font-bold text-cyan-400">Posisi Benar (3 Digit)</span>
-              </p>
-            </div>
-
-            <!-- QR CODE -->
-            <div class="bg-white p-3 rounded-2xl shadow-lg border-2 border-amber-400 flex flex-col items-center">
-              <img id="qr-code-img" src="" alt="QR Join" class="w-28 h-28 sm:w-32 sm:h-32 rounded-lg">
-              <span class="text-[10px] font-bold text-slate-800 mt-1 uppercase">Scan Untuk Join</span>
-            </div>
-          </div>
-
-          <!-- CONNECTED PLAYERS LIST -->
-          <div class="mt-8 pt-6 border-t border-slate-700/80">
-            <div class="flex justify-between items-center mb-4">
-              <h4 class="text-lg font-bold fredoka text-slate-200 flex items-center gap-2">
-                <i class="fa-solid fa-users text-purple-400"></i> PESERTA TERHUBUNG: 
-                <span id="lobby-player-count" class="px-3 py-0.5 rounded-full bg-purple-600 text-white text-sm font-bold">0</span>
-              </h4>
-            </div>
-
-            <div id="lobby-players-grid" class="flex flex-wrap gap-2.5 max-h-48 overflow-y-auto p-2 bg-slate-950/50 rounded-2xl border border-white/5 justify-center sm:justify-start">
-              <p class="text-slate-400 text-sm italic w-full text-center py-4">Menunggu peserta memasukkan PIN...</p>
-            </div>
-          </div>
-
-          <!-- START GAME BUTTON -->
-          <div class="mt-8">
-            <button onclick="startHostGame()" class="btn-kahoot w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 font-black fredoka text-2xl rounded-2xl shadow-xl border-b-4 border-emerald-800 text-white animate-pulse-subtle">
-              <i class="fa-solid fa-rocket mr-2"></i> MULAI PERMAINAN (START)
-            </button>
-          </div>
-        </div>
+      <div id="host-login-error" class="hidden p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-semibold">
+        <!-- Login error message dynamically injected -->
       </div>
 
-    </section>
-
-
-    <!-- ==================== SCREEN 2: HOST LIVE DASHBOARD ==================== -->
-    <section id="screen-host-dashboard" class="w-full max-w-5xl flex flex-col items-center hidden animate-slide-in">
-      
-      <!-- TOP CONTROL & TIMER BAR -->
-      <div class="w-full bg-slate-900/90 border-2 border-indigo-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl mb-4 backdrop-blur-xl flex flex-wrap justify-between items-center gap-4">
-        
+      <form onsubmit="handleHostLogin(event)" class="space-y-4">
         <div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-slate-400 font-bold uppercase">GAME PIN: <strong id="dash-pin" class="text-amber-400 text-base">------</strong></span>
-            <span class="text-xs text-slate-400 font-bold uppercase">| SESI KE: <strong id="dash-session-num" class="text-cyan-400 text-base">#1</strong></span>
-          </div>
-          <h3 id="dash-game-title" class="text-xl sm:text-2xl font-black fredoka text-white">SESI MONITORING LIVE</h3>
+          <label class="block text-xs font-bold text-slate-300 mb-1">EMAIL HOST</label>
+          <input type="email" id="login-email" required placeholder="panitia@lkmm.com" class="w-full py-3 px-4 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500 transition">
         </div>
 
-        <!-- TIMER DISPLAY & CONTROLS -->
-        <div class="flex items-center gap-3">
-          <div class="flex flex-col items-center bg-slate-950/70 px-5 py-2 rounded-2xl border border-amber-400/30">
-            <span class="text-[10px] text-slate-400 font-bold uppercase">Waktu Sesi</span>
-            <span id="dash-timer" class="text-3xl sm:text-4xl font-black fredoka text-amber-400">15s</span>
-          </div>
-
-          <button onclick="nextSession15s()" class="btn-kahoot px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 font-bold fredoka text-slate-900 text-sm sm:text-base border-b-4 border-amber-700 shadow-lg flex items-center gap-2">
-            <i class="fa-solid fa-rotate-right"></i> LANJUT SESI (15S)
-          </button>
-
-          <button onclick="endHostGameConfirm()" class="btn-kahoot px-4 py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 font-bold fredoka text-white text-sm border-b-4 border-rose-800 shadow-lg">
-            <i class="fa-solid fa-stop-circle"></i> AKHIRI GAME
-          </button>
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">PASSWORD</label>
+          <input type="password" id="login-password" required placeholder="••••••••" class="w-full py-3 px-4 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500 transition">
         </div>
+
+        <button type="submit" id="btn-login-submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-extrabold text-sm btn-3d">
+          Login Host
+        </button>
+      </form>
+
+      <button onclick="goToLandingScreen()" class="w-full py-2 text-xs text-slate-400 hover:text-white transition">
+        &larr; Kembali ke Pemilihan Peran
+      </button>
+    </div>
+
+    <!-- VIEW 3: HOST GAME CONFIGURATION (MODE SELECTOR) -->
+    <div id="screen-host-config" class="hidden w-full max-w-xl bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl space-y-6">
+      <div class="text-center space-y-2">
+        <h2 class="fredoka text-3xl font-extrabold text-white">Pengaturan Game Baru</h2>
+        <p class="text-sm text-slate-400">Pilih jenis permainan yang ingin dimainkan peserta.</p>
       </div>
 
-      <!-- LIVE SUBMISSION COUNTER & REVEAL STATUS BANNER -->
-      <div id="host-submission-status-banner" class="w-full bg-gradient-to-r from-purple-900/90 via-indigo-900/90 to-purple-950/90 border-2 border-purple-400/50 rounded-2xl p-4 mb-4 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row justify-between items-center gap-3">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-amber-400/20 border border-amber-400/50 flex items-center justify-center text-xl text-amber-300">
-            ⚡
+      <!-- Game Type Selection Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+        <!-- Game 1 Card -->
+        <div id="card-game-posisi" onclick="selectGameType('POSISI_BENAR')" class="cursor-pointer p-5 rounded-2xl bg-slate-950 border-2 border-indigo-500/80 hover:border-indigo-400 transition flex flex-col justify-between space-y-3 relative overflow-hidden">
+          <div class="flex justify-between items-start">
+            <span class="text-3xl">🎯</span>
+            <span id="badge-game-posisi" class="px-2.5 py-0.5 rounded-full bg-indigo-500 text-white text-[10px] font-black uppercase">Terpilih</span>
           </div>
           <div>
-            <span class="text-xs text-slate-300 font-bold uppercase tracking-wider block">STATUS ANGKET TEBAKAN SESI</span>
-            <h4 id="host-live-counter-text" class="text-lg font-black fredoka text-amber-300">
-              0 Peserta Sudah Mengirim Tebakan
-            </h4>
+            <h3 class="fredoka text-lg font-bold text-white">Posisi Benar</h3>
+            <p class="text-xs text-slate-400 mt-1">Tebak kode unik rahasia (Bulls & Cows style).</p>
           </div>
         </div>
 
-        <div id="host-reveal-badge" class="px-3.5 py-1.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40 text-xs font-bold flex items-center gap-2">
-          <i class="fa-solid fa-lock text-amber-400"></i>
-          <span id="host-reveal-status-text">Tebakan Terkunci (Revealed Saat 0s)</span>
+        <!-- Game 2 Card -->
+        <div id="card-game-boom" onclick="selectGameType('ANGKA_BOOM')" class="cursor-pointer p-5 rounded-2xl bg-slate-950 border-2 border-slate-800 hover:border-indigo-500/50 transition flex flex-col justify-between space-y-3 relative overflow-hidden">
+          <div class="flex justify-between items-start">
+            <span class="text-3xl">💣</span>
+            <span id="badge-game-boom" class="hidden px-2.5 py-0.5 rounded-full bg-indigo-500 text-white text-[10px] font-black uppercase">Terpilih</span>
+          </div>
+          <div>
+            <h3 class="fredoka text-lg font-bold text-white">Angka Boom</h3>
+            <p class="text-xs text-slate-400 mt-1">Tebak angka rahasia dalam rentang & persempit batas.</p>
+          </div>
         </div>
       </div>
 
-      <!-- ANGKA BOOM BOUNDS BANNER (ONLY DISPLAYED IN ANGKA BOOM MODE) -->
-      <div id="host-boom-bounds-card" class="w-full bg-gradient-to-r from-purple-900/90 via-indigo-900/90 to-slate-900/90 border-4 border-rose-500/50 rounded-3xl p-5 mb-4 shadow-2xl text-center backdrop-blur-xl hidden">
-        <span class="text-xs font-bold text-rose-300 uppercase tracking-widest block mb-1">
-          💣 RENTANG ANGKA BOOM PROYEKTOR
-        </span>
-        <div class="flex justify-center items-center gap-4 sm:gap-8 my-2">
-          <div class="bg-slate-950/80 px-6 py-3 rounded-2xl border-2 border-cyan-400">
-            <span class="text-[10px] text-slate-400 font-bold uppercase block">BATAS BAWAH</span>
-            <span id="host-boom-lower" class="text-3xl sm:text-5xl font-black fredoka text-cyan-300">0</span>
-          </div>
-          <span class="text-2xl sm:text-4xl font-black fredoka text-amber-400">&lt; ??? &lt;</span>
-          <div class="bg-slate-950/80 px-6 py-3 rounded-2xl border-2 border-rose-400">
-            <span class="text-[10px] text-slate-400 font-bold uppercase block">BATAS ATAS</span>
-            <span id="host-boom-upper" class="text-3xl sm:text-5xl font-black fredoka text-rose-300">1000</span>
-          </div>
+      <!-- Specific Game Options -->
+      <!-- Sub-options for Posisi Benar -->
+      <div id="options-posisi-benar" class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-3">
+        <label class="block text-xs font-extrabold text-slate-300">PILIH MODE DIGIT (DEFAULT 3 DIGIT):</label>
+        <div class="grid grid-cols-2 gap-3">
+          <button id="btn-digit-3" onclick="selectDigitMode(3)" class="py-2.5 rounded-xl bg-indigo-600 text-white font-extrabold text-sm border border-indigo-400 transition">
+            3 Digit (Unik)
+          </button>
+          <button id="btn-digit-4" onclick="selectDigitMode(4)" class="py-2.5 rounded-xl bg-slate-900 text-slate-400 hover:text-white font-extrabold text-sm border border-slate-800 transition">
+            4 Digit (Unik)
+          </button>
         </div>
-        <p id="host-boom-notice" class="text-[11px] text-slate-400 italic mt-1">
-          Batas proyektor akan diperbarui secara otomatis ketika timer sesi mencapai 0s.
-        </p>
       </div>
 
-      <!-- LIVE FEED TABLE (MAX 10 FIFO ROWS - REVEALED ON TIMER 0s) -->
-      <div class="w-full bg-slate-900/90 border-4 border-purple-500/30 rounded-3xl p-5 sm:p-7 shadow-2xl backdrop-blur-xl">
-        <div class="flex justify-between items-center mb-4 pb-2 border-b border-white/10">
-          <h4 class="text-lg font-bold fredoka text-slate-200 flex items-center gap-2">
-            <i class="fa-solid fa-stream text-amber-400"></i> FEED TEBAKAN TERBUKA 
-            <span class="text-xs font-semibold text-slate-400">(Maksimal 10 Baris Sesi Berakhir)</span>
-          </h4>
-          <span class="text-xs px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
-            <i class="fa-solid fa-circle text-[8px] animate-ping mr-1"></i> Realtime Sync
-          </span>
+      <!-- Sub-options for Angka Boom -->
+      <div id="options-angka-boom" class="hidden p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-3">
+        <label class="block text-xs font-extrabold text-slate-300">PILIH RENTANG ANGKA (DEFAULT 0-1000):</label>
+        <div class="grid grid-cols-3 gap-2">
+          <button id="btn-boom-100" onclick="selectBoomRange(100)" class="py-2.5 rounded-xl bg-slate-900 text-slate-400 hover:text-white font-extrabold text-xs border border-slate-800 transition">
+            0 - 100
+          </button>
+          <button id="btn-boom-500" onclick="selectBoomRange(500)" class="py-2.5 rounded-xl bg-slate-900 text-slate-400 hover:text-white font-extrabold text-xs border border-slate-800 transition">
+            0 - 500
+          </button>
+          <button id="btn-boom-1000" onclick="selectBoomRange(1000)" class="py-2.5 rounded-xl bg-indigo-600 text-white font-extrabold text-xs border border-indigo-400 transition">
+            0 - 1000
+          </button>
+        </div>
+      </div>
+
+      <button onclick="createNewGameAsHost()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-600 hover:opacity-95 text-white font-black text-lg btn-3d shadow-xl flex items-center justify-center gap-2">
+        <i class="fa-solid fa-play"></i> Buat Game Baru
+      </button>
+    </div>
+
+    <!-- VIEW 4: HOST PROYECTOR DASHBOARD (LOBBY & LIVE FEED) -->
+    <div id="screen-host-dashboard" class="hidden w-full max-w-4xl space-y-6">
+
+      <!-- LOBBY SCREEN (Waiting for Players) -->
+      <div id="host-subscreen-lobby" class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl text-center space-y-6">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-6 pb-6 border-b border-slate-800">
+          <div class="text-left space-y-1">
+            <span class="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold uppercase" id="host-lobby-game-title">
+              🎯 Posisi Benar (3 Digit)
+            </span>
+            <h2 class="fredoka text-3xl font-extrabold text-white">Lobby Permainan</h2>
+            <p class="text-xs text-slate-400">Bagikan Game PIN kepada peserta untuk bergabung.</p>
+          </div>
+
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex flex-col items-center gap-2">
+            <span class="text-[10px] font-bold text-slate-400 tracking-wider">GAME PIN</span>
+            <span id="host-display-pin" class="fredoka text-4xl sm:text-5xl font-black tracking-widest text-amber-400">------</span>
+          </div>
         </div>
 
-        <!-- TABLE HEADER -->
-        <div id="host-feed-header" class="grid grid-cols-12 gap-2 px-4 py-2 bg-slate-950/60 rounded-xl font-bold text-xs text-slate-400 uppercase tracking-wider mb-2 text-center">
-          <div class="col-span-2">SESI</div>
-          <div class="col-span-4 text-left">NICKNAME</div>
-          <div class="col-span-3">TEBAKAN</div>
-          <div id="feed-col-feedback" class="col-span-3 text-cyan-400">ANGKA BENAR</div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+          <!-- QR Code Container -->
+          <div class="flex flex-col items-center justify-center p-4 bg-slate-950 rounded-2xl border border-slate-800">
+            <div id="qrcode-container" class="bg-white p-3 rounded-xl"></div>
+            <span class="text-[10px] text-slate-400 mt-2">Pindai untuk Bergabung</span>
+          </div>
+
+          <!-- Connected Players Grid -->
+          <div class="md:col-span-2 space-y-3 text-left">
+            <div class="flex justify-between items-center">
+              <h3 class="text-sm font-bold text-slate-300">
+                PESERTA TERHUBUNG: <span id="host-player-count" class="text-emerald-400 font-black">0</span>
+              </h3>
+            </div>
+            <div id="host-players-list" class="min-h-[140px] max-h-[180px] overflow-y-auto p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex flex-wrap gap-2 content-start">
+              <span class="text-xs text-slate-500 italic p-2">Menunggu peserta memasukkan PIN...</span>
+            </div>
+          </div>
         </div>
 
-        <!-- FIFO CONTAINER FOR 10 ROWS -->
-        <div id="host-feed-list" class="space-y-2 min-h-[320px]">
-          <p id="feed-empty-msg" class="text-slate-400 text-sm text-center py-16 italic">
-            Belum ada tebakan sesi berakhir. Tebakan sesi berjalan akan muncul saat timer 0s...
+        <button onclick="startGameAsHost()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-extrabold text-xl btn-3d shadow-xl">
+          🚀 START GAME
+        </button>
+      </div>
+
+      <!-- ACTIVE GAME SCREEN (Projector Monitor) -->
+      <div id="host-subscreen-playing" class="hidden space-y-6">
+
+        <!-- Top Status Bar & Controls -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-2xl backdrop-blur-xl flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div class="space-y-1 text-center sm:text-left">
+            <div class="flex items-center gap-2">
+              <span id="host-game-badge" class="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold">
+                Game Mode
+              </span>
+              <span id="host-session-badge" class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold font-mono">
+                SESI #1
+              </span>
+            </div>
+            <h2 id="host-active-game-title" class="fredoka text-2xl font-bold text-white">Posisi Benar</h2>
+          </div>
+
+          <!-- Timer Display -->
+          <div class="flex items-center gap-4">
+            <div class="flex flex-col items-end">
+              <span class="text-[10px] text-slate-400 font-bold tracking-wider">SISA WAKTU</span>
+              <span id="host-timer-val" class="fredoka text-3xl font-black text-amber-400 font-mono">15s</span>
+            </div>
+            
+            <div class="flex gap-2">
+              <button onclick="nextSessionAsHost()" class="py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs btn-3d flex items-center gap-1.5">
+                <i class="fa-solid fa-forward"></i> Lanjut Sesi (15s)
+              </button>
+              <button onclick="endGameAsHost()" class="py-2.5 px-3 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 font-bold text-xs">
+                Akhiri Game
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SPECIAL GAME MODE DISPLAY (Angka Boom Bounds Card or Posisi Secret Info) -->
+        <div id="host-boom-bounds-container" class="hidden bg-slate-900/80 border border-rose-500/40 rounded-3xl p-6 text-center space-y-3 shadow-2xl pulse-glow">
+          <span class="text-xs font-bold text-rose-400 tracking-widest uppercase">RENTANG ANGKA BOOM AKTIF</span>
+          <div class="flex justify-center items-center gap-4 sm:gap-8">
+            <div class="text-center">
+              <span class="block text-[10px] text-slate-400 font-bold">BATAS BAWAH</span>
+              <span id="host-boom-lower" class="fredoka text-3xl sm:text-5xl font-black text-cyan-400 font-mono">0</span>
+            </div>
+            <span class="text-2xl sm:text-4xl text-slate-600 font-black">&lt; ??? &lt;</span>
+            <div class="text-center">
+              <span class="block text-[10px] text-slate-400 font-bold">BATAS ATAS</span>
+              <span id="host-boom-upper" class="fredoka text-3xl sm:text-5xl font-black text-amber-400 font-mono">1000</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUBMISSION PROGRESS / DELAYED REVEAL BANNER -->
+        <div id="host-reveal-banner" class="p-4 rounded-2xl bg-indigo-950/70 border border-indigo-500/40 text-center space-y-1">
+          <div class="flex justify-center items-center gap-2 text-indigo-300 font-extrabold text-sm">
+            <span class="animate-spin">⚡</span>
+            <span id="host-submitted-count-text">0 Peserta Sudah Mengirim Tebakan Sesi Ini</span>
+          </div>
+          <p id="host-reveal-subtext" class="text-xs text-indigo-400/80">
+            Hasil tebakan & pembaruan papan akan dibuka di Layar Proyektor saat Sesi Berakhir (0s).
           </p>
         </div>
-      </div>
 
-    </section>
+        <!-- LIVE FEED TABLE (MAX 10 ROWS - FIFO) -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-2xl backdrop-blur-xl space-y-4">
+          <div class="flex justify-between items-center">
+            <h3 class="fredoka text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-list-ol text-indigo-400"></i> Papan Tebakan Peserta (10 Terbaru)
+            </h3>
+            <span class="text-[11px] text-slate-400 italic">Terurut dari yang pertama kirim</span>
+          </div>
 
-
-    <!-- ==================== SCREEN 3: PLAYER JOIN ==================== -->
-    <section id="screen-player-join" class="w-full max-w-md flex flex-col items-center justify-center hidden animate-slide-in">
-      <div class="w-full bg-slate-800/95 border-4 border-cyan-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl text-center">
-        <div class="w-16 h-16 rounded-2xl bg-cyan-500/20 border-2 border-cyan-400 flex items-center justify-center text-3xl mx-auto mb-3">
-          📱
+          <div class="overflow-x-auto">
+            <table class="w-full text-center text-xs">
+              <thead>
+                <tr id="host-table-thead" class="text-slate-400 border-b border-slate-800 uppercase font-bold">
+                  <!-- Injected via JS depending on game mode -->
+                </tr>
+              </thead>
+              <tbody id="host-table-tbody" class="divide-y divide-slate-800/60 font-mono">
+                <!-- Max 10 Rows dynamically rendered -->
+              </tbody>
+            </table>
+          </div>
         </div>
-        <h3 class="text-2xl sm:text-3xl font-black fredoka text-cyan-300 mb-1">GABUNG PERMAINAN</h3>
-        <p class="text-xs text-slate-300 mb-6">Masukkan PIN dari layar proyektor Host</p>
 
-        <form onsubmit="joinGameAsPlayer(event)" class="space-y-4">
-          <div>
-            <label class="block text-left text-xs font-bold uppercase text-slate-300 mb-1">GAME PIN (6 Digit)</label>
-            <input id="input-pin" type="number" pattern="[0-9]*" maxlength="6" required placeholder="Contoh: 482109" class="w-full py-3.5 px-4 rounded-2xl bg-slate-900 border-2 border-slate-600 focus:border-cyan-400 text-center text-2xl font-black tracking-widest text-amber-300 outline-none transition">
-          </div>
-
-          <div>
-            <label class="block text-left text-xs font-bold uppercase text-slate-300 mb-1">NICKNAME / NAMA ANDA</label>
-            <input id="input-nickname" type="text" maxlength="12" required placeholder="Contoh: Budi" class="w-full py-3 px-4 rounded-2xl bg-slate-900 border-2 border-slate-600 focus:border-cyan-400 text-center text-lg font-bold text-white outline-none transition">
-          </div>
-
-          <button type="submit" class="btn-kahoot w-full py-4 px-6 bg-cyan-500 hover:bg-cyan-400 font-black fredoka text-xl rounded-2xl shadow-lg border-b-4 border-cyan-700 text-white mt-2">
-            MASUK GAME
-          </button>
-        </form>
       </div>
-    </section>
 
+      <!-- GAME WINNER / FINISHED MODAL CARD -->
+      <div id="host-subscreen-finished" class="hidden bg-slate-900/90 border border-amber-500/40 rounded-3xl p-8 shadow-2xl text-center space-y-6">
+        <div class="inline-block p-4 rounded-full bg-amber-500/20 text-amber-400 text-5xl bounce-slow">
+          🏆
+        </div>
+        
+        <div class="space-y-2">
+          <h2 class="fredoka text-4xl font-black text-amber-300">GAME BERAKHIR!</h2>
+          <p class="text-sm text-slate-300">Pemenang telah ditemukan!</p>
+        </div>
 
-    <!-- ==================== SCREEN 4: PLAYER WAITING ==================== -->
-    <section id="screen-player-waiting" class="w-full max-w-md flex flex-col items-center justify-center hidden animate-slide-in">
-      <div class="w-full bg-slate-800/95 border-4 border-purple-500/40 rounded-3xl p-8 shadow-2xl backdrop-blur-xl text-center">
-        <div class="w-20 h-20 rounded-full bg-purple-500/20 border-4 border-purple-400/60 flex items-center justify-center text-4xl mx-auto mb-4 animate-bounce">
+        <div class="p-6 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 max-w-md mx-auto">
+          <span class="text-xs font-bold text-slate-400">NICKNAME PEMENANG</span>
+          <h3 id="winner-nickname" class="fredoka text-3xl font-black text-emerald-400">---</h3>
+          <div class="pt-2 border-t border-slate-800 flex justify-between items-center text-xs text-slate-400">
+            <span>KODE/ANGKA RAHASIA:</span>
+            <span id="winner-secret-code" class="font-mono font-black text-amber-400 text-base">----</span>
+          </div>
+        </div>
+
+        <div class="flex justify-center gap-4 pt-2">
+          <button onclick="restartGameAsHost()" class="py-3 px-6 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-extrabold text-sm btn-3d">
+            <i class="fa-solid fa-rotate-right"></i> Main Ulang (Reset Game)
+          </button>
+          <button onclick="goToLandingScreen()" class="py-3 px-6 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-bold text-sm">
+            Menu Utama
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- VIEW 5: PLAYER JOIN SCREEN -->
+    <div id="screen-player-join" class="hidden w-full max-w-md bg-slate-900/70 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl space-y-6">
+      <div class="text-center space-y-2">
+        <div class="inline-block p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-3xl mb-1">
+          <i class="fa-solid fa-user-plus"></i>
+        </div>
+        <h2 class="fredoka text-2xl font-bold text-white">Gabung Permainan</h2>
+        <p class="text-xs text-slate-400">Masukkan PIN 6-digit dari layar proyektor.</p>
+      </div>
+
+      <div id="player-join-error" class="hidden p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-semibold">
+        <!-- Error alert message -->
+      </div>
+
+      <form onsubmit="handlePlayerJoin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">GAME PIN (6 DIGIT)</label>
+          <input type="number" id="player-pin-input" required placeholder="Contoh: 482109" maxlength="6" class="w-full py-3.5 px-4 rounded-xl bg-slate-950 border border-slate-800 text-white text-center text-2xl font-mono tracking-widest font-black focus:outline-none focus:border-emerald-500 transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">NICKNAME (NAMA KELOMPOK)</label>
+          <input type="text" id="player-nickname-input" required placeholder="Contoh: Tim Alpha" maxlength="15" class="w-full py-3 px-4 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-emerald-500 transition">
+        </div>
+
+        <button type="submit" class="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-extrabold text-lg btn-3d">
+          Gabung Game
+        </button>
+      </form>
+
+      <button onclick="goToLandingScreen()" class="w-full py-2 text-xs text-slate-400 hover:text-white transition">
+        &larr; Kembali ke Pemilihan Peran
+      </button>
+    </div>
+
+    <!-- VIEW 6: PLAYER WAITING ROOM SCREEN -->
+    <div id="screen-player-waiting" class="hidden w-full max-w-md bg-slate-900/70 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl text-center space-y-6">
+      <div class="space-y-3">
+        <div class="inline-block p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-4xl bounce-slow">
           ⏳
         </div>
-        <h3 class="text-2xl font-black fredoka text-purple-200 mb-2">ANDA SUDAH GABUNG!</h3>
-        <p class="text-sm font-bold text-amber-300 mb-4" id="wait-player-name">Nickname: Budi</p>
-        
-        <div class="p-4 rounded-2xl bg-slate-900/80 border border-white/10 mb-6">
-          <p class="text-xs text-slate-300 mb-1">Status Ruangan:</p>
-          <span class="text-base font-bold text-cyan-400 flex items-center justify-center gap-2">
-            <i class="fa-solid fa-spinner fa-spin"></i> Menunggu Host Memulai Game...
-          </span>
-        </div>
-
-        <p class="text-xs text-slate-400 italic">
-          Game akan otomatis berpindah ke tampilan keypad setelah Host menekan tombol Start!
-        </p>
+        <h2 class="fredoka text-2xl font-bold text-white">Anda Berhasil Masuk!</h2>
+        <p class="text-xs text-slate-400">Menunggu Host memulai permainan di proyektor...</p>
       </div>
-    </section>
 
+      <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
+        <span class="text-[10px] text-slate-400 font-bold">NICKNAME ANDA:</span>
+        <h3 id="player-waiting-nickname" class="fredoka text-xl font-bold text-emerald-400">---</h3>
+      </div>
+    </div>
 
-    <!-- ==================== SCREEN 5: PLAYER GAMEPLAY ==================== -->
-    <section id="screen-player-gameplay" class="w-full max-w-md flex flex-col items-center hidden animate-slide-in">
-      
-      <!-- PLAYER TOP HEADER -->
-      <div class="w-full bg-slate-900/90 border-2 border-cyan-500/40 rounded-2xl p-3 px-4 shadow-xl mb-3 flex justify-between items-center backdrop-blur-md">
+    <!-- VIEW 7: PLAYER ACTIVE GAMEPLAY SCREEN (MOBILE KEYPAD) -->
+    <div id="screen-player-game" class="hidden w-full max-w-md space-y-5">
+
+      <!-- Player Header Card -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex justify-between items-center">
         <div>
-          <span class="text-[10px] text-slate-400 font-bold block uppercase">PEMAIN</span>
-          <span id="game-player-nickname" class="text-sm font-black text-cyan-300">Budi</span>
+          <span id="player-mode-badge" class="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold">
+            Posisi Benar
+          </span>
+          <h2 id="player-game-title" class="fredoka text-lg font-bold text-white mt-1">Input Tebakan</h2>
         </div>
 
-        <div class="flex items-center gap-3">
-          <div class="text-center bg-slate-950 px-3 py-1 rounded-xl border border-cyan-400/30">
-            <span class="text-[9px] text-slate-400 font-bold block">SESI</span>
-            <span id="player-session-num" class="text-base font-black fredoka text-cyan-400">#1</span>
+        <div class="text-right">
+          <span class="text-[9px] text-slate-400 font-bold block">TIMER SESI</span>
+          <span id="player-timer-val" class="fredoka text-2xl font-black text-amber-400 font-mono">15s</span>
+        </div>
+      </div>
+
+      <!-- STATUS OVERLAY BANNER (SUBMITTED / TIMER 0S) -->
+      <div id="player-status-banner" class="hidden p-3 rounded-xl text-center text-xs font-bold transition">
+        <!-- Injected via JS -->
+      </div>
+
+      <!-- RENTANG BOOM CARD FOR PLAYER (Only visible in Angka Boom mode) -->
+      <div id="player-boom-bounds-card" class="hidden bg-slate-950 p-3.5 rounded-2xl border border-rose-500/30 text-center">
+        <span class="text-[10px] font-bold text-rose-400 uppercase tracking-wider block">RENTANG BOOM AKTIF HP ANDA</span>
+        <div class="flex justify-center items-center gap-4 mt-1 font-mono">
+          <span id="player-boom-lower" class="text-xl font-black text-cyan-400">0</span>
+          <span class="text-slate-500 text-sm font-bold">&lt; TEBAK &lt;</span>
+          <span id="player-boom-upper" class="text-xl font-black text-amber-400">1000</span>
+        </div>
+      </div>
+
+      <!-- INPUT DISPLAY & KEYPAD CONTAINER -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-2xl backdrop-blur-xl space-y-4">
+        
+        <!-- Input Slots Display -->
+        <div class="text-center space-y-2">
+          <label id="player-input-label" class="block text-xs font-bold text-slate-400">MASUKKAN ANGKA TEBAKAN</label>
+          
+          <!-- Slots for Posisi Benar (3 or 4 digits) -->
+          <div id="digit-slots-container" class="flex justify-center gap-3 py-2">
+            <!-- Dynamically generated 3 or 4 slots -->
           </div>
 
-          <div id="player-timer-badge" class="text-center bg-slate-950 px-3.5 py-1 rounded-xl border border-amber-400/30">
-            <span class="text-[9px] text-slate-400 font-bold block">TIMER</span>
-            <span id="player-timer" class="text-lg font-black fredoka text-amber-400">15s</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- STATUS BANNERS (SUBMITTED / PAUSED) -->
-      <div id="session-submitted-banner" class="w-full bg-gradient-to-r from-emerald-600/90 to-teal-600/90 border-2 border-emerald-300 rounded-2xl p-3 mb-3 text-center shadow-lg backdrop-blur-md hidden animate-slide-in">
-        <p class="text-sm font-black fredoka text-white flex items-center justify-center gap-2">
-          <i class="fa-solid fa-circle-check text-emerald-200"></i> TEBAKAN SESI <span id="banner-session-num">#1</span> TERKIRIM! (1/1)
-        </p>
-        <p class="text-[11px] text-emerald-100 font-semibold">Hasil privat tersimpan di riwayat Anda. Menunggu sesi berikutnya...</p>
-      </div>
-
-      <div id="session-pause-banner" class="w-full bg-gradient-to-r from-amber-600/90 to-rose-600/90 border-2 border-amber-300 rounded-2xl p-3 mb-3 text-center shadow-lg backdrop-blur-md hidden animate-pulse-subtle">
-        <p class="text-sm font-black fredoka text-white flex items-center justify-center gap-2">
-          <i class="fa-solid fa-circle-pause text-amber-200"></i> SESI TERJEDA / WAKTU HABIS (0s)
-        </p>
-        <p class="text-[11px] text-amber-100 font-semibold">Menunggu Host menekan "Lanjut Sesi (15s)"...</p>
-      </div>
-
-      <!-- ANGKA BOOM PLAYER BOUNDS BANNER -->
-      <div id="player-boom-bounds-banner" class="w-full bg-slate-900/90 border-2 border-rose-500/40 rounded-2xl p-3 mb-3 text-center shadow-lg backdrop-blur-md hidden">
-        <span class="text-[10px] text-slate-400 font-bold uppercase block mb-1">BATAS RENTANG AKTIF SAAT INI:</span>
-        <div class="flex justify-center items-center gap-4">
-          <span id="player-boom-lower" class="text-xl font-black fredoka text-cyan-300">0</span>
-          <span class="text-sm font-bold text-amber-400">&lt; ANGKA RAHASIA &lt;</span>
-          <span id="player-boom-upper" class="text-xl font-black fredoka text-rose-300">1000</span>
-        </div>
-      </div>
-
-      <!-- INPUT DISPLAY SLOTS / VALUE CONTAINER -->
-      <div class="w-full bg-slate-900/90 border-4 border-purple-500/40 rounded-3xl p-4 shadow-2xl backdrop-blur-xl mb-3 text-center">
-        <span id="player-input-label" class="text-xs font-bold text-slate-300 block mb-2 uppercase tracking-wider">
-          MASUKKAN <span id="player-mode-digit-text" class="text-amber-300">3 DIGIT</span> ANGKA UNIK
-        </span>
-
-        <!-- SLOTS CONTAINER (FOR POSISI BENAR) -->
-        <div id="digit-slots-container" class="flex justify-center gap-3 mb-1">
-          <!-- Dynamically Generated Slots -->
-        </div>
-
-        <!-- SINGLE INPUT CONTAINER (FOR ANGKA BOOM) -->
-        <div id="boom-input-container" class="hidden">
-          <div id="boom-input-display" class="w-full py-3 px-4 bg-slate-950/80 border-2 border-amber-400/50 rounded-2xl text-3xl font-black fredoka text-amber-300 text-center min-h-[60px] flex items-center justify-center tracking-wider">
-            <!-- Dynamically Displayed Number -->
+          <!-- Integer Display for Angka Boom -->
+          <div id="boom-input-container" class="hidden py-2">
+            <div id="boom-input-display" class="w-full py-3 bg-slate-950 rounded-xl border border-slate-800 text-center font-mono font-black text-3xl text-amber-400 tracking-widest min-h-[56px] flex items-center justify-center">
+              _
+            </div>
           </div>
         </div>
 
-        <p id="keypad-error-msg" class="text-xs text-rose-400 font-bold h-4 mt-1"></p>
-      </div>
-
-      <!-- NUMPAD KEYPAD CONTAINER -->
-      <div id="keypad-container" class="w-full bg-slate-900/90 border-2 border-white/10 rounded-3xl p-4 shadow-2xl backdrop-blur-xl mb-4 relative">
-        <div class="grid grid-cols-3 gap-2.5 mb-2.5">
-          <button onclick="pressNumpad('1')" class="numpad-btn btn-kahoot py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-2xl font-black fredoka text-white border-b-4 border-slate-950">1</button>
-          <button onclick="pressNumpad('2')" class="numpad-btn btn-kahoot py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-2xl font-black fredoka text-white border-b-4 border-slate-950">2</button>
-          <button onclick="pressNumpad('3')" class="numpad-btn btn-kahoot py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-2xl font-black fredoka text-white border-b-4 border-slate-950">3</button>
-
-          <button onclick="pressNumpad('4')" class="numpad-btn btn-kahoot py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-2xl font-black fredoka text-white border-b-4 border-slate-950">4</button>
-          <button onclick="pressNumpad('5')" class="numpad-btn btn-kahoot py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-2xl font-black fredoka text-white border-b-4 border-slate-950">5</button>
-          <button onclick="pressNumpad('6')" class="numpad-btn btn-kahoot py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-2xl font-black fredoka text-white border-b-4 border-slate-950">6</button>
-
-          <button onclick="pressNumpad('7')" class="numpad-btn btn-kahoot py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-2xl font-black fredoka text-white border-b-4 border-slate-950">7</button>
-          <button onclick="pressNumpad('8')" class="numpad-btn btn-kahoot py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-2xl font-black fredoka text-white border-b-4 border-slate-950">8</button>
-          <button onclick="pressNumpad('9')" class="numpad-btn btn-kahoot py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-2xl font-black fredoka text-white border-b-4 border-slate-950">9</button>
-
-          <button id="btn-clear" onclick="clearNumpad()" class="btn-kahoot py-3.5 rounded-2xl bg-rose-900/60 hover:bg-rose-800 text-sm font-bold fredoka text-rose-200 border-b-4 border-rose-950">C</button>
-          <button onclick="pressNumpad('0')" class="numpad-btn btn-kahoot py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-2xl font-black fredoka text-white border-b-4 border-slate-950">0</button>
-          <button id="btn-delete" onclick="deleteNumpad()" class="btn-kahoot py-3.5 rounded-2xl bg-amber-900/60 hover:bg-amber-800 text-sm font-bold fredoka text-amber-200 border-b-4 border-amber-950"><i class="fa-solid fa-backspace"></i></button>
+        <!-- Custom Keypad Container -->
+        <div id="keypad-container" class="space-y-2">
+          <!-- Dynamically generated Touch Keypad -->
         </div>
 
-        <button id="btn-submit-guess" onclick="submitPlayerGuess()" class="btn-kahoot w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 font-black fredoka text-xl text-white shadow-xl border-b-4 border-emerald-800">
-          KIRIM TEBAKAN <i class="fa-solid fa-paper-plane ml-1"></i>
-        </button>
+        <div id="keypad-error-msg" class="text-center text-xs text-rose-400 font-semibold min-h-[16px]"></div>
       </div>
 
-      <!-- PRIVATE GUESS HISTORY TABLE -->
-      <div class="w-full bg-slate-900/90 border-2 border-white/10 rounded-3xl p-4 shadow-xl backdrop-blur-md">
-        <h4 class="text-xs font-bold text-slate-300 mb-3 uppercase tracking-wider flex items-center justify-between">
-          <span><i class="fa-solid fa-clock-rotate-left mr-1 text-cyan-400"></i> Riwayat Tebakan Anda</span>
-          <span id="my-guess-count" class="text-amber-400 font-bold">0 kali</span>
-        </h4>
+      <!-- PLAYER PRIVATE HISTORY TABLE -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-2xl backdrop-blur-xl space-y-3">
+        <h3 class="fredoka text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> Riwayat Tebakan Anda
+        </h3>
 
-        <div class="w-full overflow-hidden rounded-2xl border border-white/10">
-          <table class="w-full text-left border-collapse">
+        <div class="max-h-[160px] overflow-y-auto">
+          <table class="w-full text-center text-xs">
             <thead>
-              <tr id="player-history-thead" class="bg-slate-950/80 text-[10px] font-bold text-slate-400 uppercase text-center border-b border-white/10">
-                <th class="py-2 px-2">SESI</th>
-                <th class="py-2 px-3 text-left">TEBAKAN</th>
-                <th class="py-2 px-2 text-emerald-400">POSISI BENAR</th>
-                <th class="py-2 px-2 text-cyan-400">ANGKA BENAR</th>
+              <tr id="player-table-thead" class="text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
+                <!-- Injected via JS -->
               </tr>
             </thead>
-            <tbody id="player-history-tbody" class="text-xs font-bold text-center">
-              <tr>
-                <td colspan="4" class="text-slate-400 text-xs py-4 italic font-normal">Belum ada tebakan dikirim.</td>
-              </tr>
+            <tbody id="player-table-tbody" class="divide-y divide-slate-800/60 font-mono">
+              <!-- Private History Rows -->
             </tbody>
           </table>
         </div>
       </div>
 
-    </section>
-
-
-    <!-- ==================== SCREEN 6: WINNER / FINISHED MODAL ==================== -->
-    <section id="screen-finished" class="w-full max-w-2xl flex flex-col items-center justify-center hidden animate-slide-in">
-      <div class="w-full bg-slate-900/95 border-4 border-amber-400 rounded-3xl p-8 text-center shadow-2xl backdrop-blur-xl relative overflow-hidden">
-        
-        <div id="finished-icon-badge" class="w-24 h-24 rounded-full bg-amber-400/20 border-4 border-amber-400 flex items-center justify-center text-5xl mx-auto mb-4 animate-bounce">
-          🏆
-        </div>
-
-        <span class="px-4 py-1.5 rounded-full bg-amber-400/20 text-amber-300 font-bold text-xs uppercase tracking-widest border border-amber-400/40 mb-3 inline-block">
-          GAME SELESAI
-        </span>
-
-        <h2 id="finished-title-text" class="text-3xl sm:text-5xl font-black fredoka text-white mb-2">
-          PEMENANG KODE RAHASIA!
-        </h2>
-
-        <div class="p-6 rounded-2xl bg-gradient-to-br from-purple-900/80 to-indigo-950/80 border-2 border-amber-400/50 my-6">
-          <p class="text-xs text-slate-300 uppercase font-bold mb-1">NICKNAME PEMENANG</p>
-          <h3 id="winner-name-display" class="text-4xl sm:text-5xl font-black fredoka text-amber-300 mb-4 animate-pulse">
-            BUDI
-          </h3>
-
-          <p class="text-xs text-slate-300 uppercase font-bold mb-1">KODE / ANGKA RAHASIA</p>
-          <div id="revealed-secret-code" class="text-4xl sm:text-6xl font-black fredoka tracking-widest text-emerald-400">
-            5 8 1 4
-          </div>
-        </div>
-
-        <!-- FINISHED ACTIONS FOR HOST VS PLAYER -->
-        <div id="finished-host-actions" class="hidden flex flex-col sm:flex-row gap-3 justify-center items-center">
-          <button onclick="restartGameAsHost()" class="btn-kahoot px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black fredoka text-xl rounded-2xl shadow-xl border-b-4 border-emerald-700">
-            <i class="fa-solid fa-rotate-right mr-2"></i> MAIN ULANG (RESET GAME)
-          </button>
-          <button onclick="showScreen('screen-role-select')" class="btn-kahoot px-6 py-4 bg-slate-700 hover:bg-slate-600 text-white font-bold fredoka text-base rounded-2xl border-b-4 border-slate-900">
-            MENU UTAMA
-          </button>
-        </div>
-
-        <div id="finished-player-actions" class="hidden flex flex-col gap-3 items-center">
-          <div class="p-3.5 px-6 rounded-2xl bg-slate-800/90 border border-amber-400/40 text-amber-300 font-bold text-sm animate-pulse">
-            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Menunggu Host Memulai Game Baru...
-          </div>
-          <button onclick="showScreen('screen-role-select')" class="text-xs font-bold text-slate-400 hover:text-slate-200 transition">
-            <i class="fa-solid fa-house mr-1"></i> Keluar ke Menu Utama
-          </button>
-        </div>
-      </div>
-    </section>
+    </div>
 
   </main>
 
   <!-- FOOTER -->
-  <footer class="w-full py-3 px-4 text-center text-xs text-slate-400 border-t border-white/5 bg-slate-950/60 backdrop-blur-md">
-    LKMM TD POLTERA &copy; 2026 Game Platform - Multi-Mode Kahoot Style Web App
+  <footer class="w-full py-3 text-center text-[11px] text-slate-500 border-t border-slate-800/40">
+    Bulls & Cows Kahoot-Style App &bull; Powered by Firebase Realtime Database
   </footer>
 
-
-  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <!-- APPLICATION LOGIC JS -->
   <script>
-    /* =========================================================================
-       1. FIREBASE CONFIGURATION (EXACT HARDCODED CONFIG)
-       ========================================================================= */
+    // 1. MANDATORY HARDCODED FIREBASE CONFIGURATION
     const firebaseConfig = {
       apiKey: "AIzaSyCYJ0DVl3_C0otcUYJ7h38rRXGB_M5eN2g",
       authDomain: "icebreaking-57186.firebaseapp.com",
@@ -686,1126 +552,890 @@
     const db = firebase.database();
     const auth = firebase.auth();
 
-    /* =========================================================================
-       2. GLOBAL STATE & VARIABLES
-       ========================================================================= */
-    let isSoundOn = true;
-    let selectedGameType = 'POSISI_BENAR'; // 'POSISI_BENAR' or 'ANGKA_BOOM'
-    let selectedDigitMode = 3;            // 3 or 4 for Posisi Benar
-    let selectedBoomRange = 1000;         // 100, 500, or 1000 for Angka Boom
-
+    // Application State Variables
+    let currentRole = null; // 'HOST' or 'PLAYER'
     let currentRoomPin = null;
-    let isHost = false;
-    let localPlayerId = 'player_' + Math.random().toString(36).substr(2, 9);
+    let selectedGameType = 'POSISI_BENAR'; // 'POSISI_BENAR' or 'ANGKA_BOOM'
+    let selectedDigitMode = 3; // 3 or 4
+    let selectedBoomRange = 1000; // 100, 500, or 1000
+
+    // Host Runtime State
+    let hostTimerInterval = null;
+    let hostCurrentTimer = 15;
+    let hostSessionNumber = 1;
+
+    // Player Runtime State
+    let localPlayerId = 'P_' + Math.random().toString(36).substring(2, 9);
     let localPlayerNickname = '';
-    let currentSecretCode = '';
-    let currentBoomSecret = 0;
-
-    let activeTimerInterval = null;
     let currentInputDigits = [];
-    let currentSessionNumber = 1;
-    let isSessionActive = true;
-    let currentTimerVal = 15;
-    let hasSubmittedThisSession = false;
-    let roomRef = null;
-    let guessesRef = null;
+    let playerSubmittedSessions = {}; // tracks session numbers player submitted to
 
-    // Listen to Firebase Auth state
-    auth.onAuthStateChanged((user) => {
-      const logoutBtn = document.getElementById('btn-host-logout');
-      if (user) {
-        if (logoutBtn) logoutBtn.classList.remove('hidden');
-      } else {
-        if (logoutBtn) logoutBtn.classList.add('hidden');
-      }
-    });
-
-    /* =========================================================================
-       3. WEB AUDIO SYNTHESIZER
-       ========================================================================= */
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
+    // Web Audio Synthesizer for SFX
     function playSound(type) {
-      if (!isSoundOn) return;
       try {
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
         osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        gain.connect(ctx.destination);
 
-        const now = audioCtx.currentTime;
-
-        if (type === 'click') {
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(400, now);
-          gain.gain.setValueAtTime(0.1, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-          osc.start(now);
-          osc.stop(now + 0.05);
-        } else if (type === 'tick') {
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(800, now);
-          gain.gain.setValueAtTime(0.08, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
-          osc.start(now);
-          osc.stop(now + 0.04);
+        if (type === 'tick') {
+          osc.frequency.setValueAtTime(600, ctx.currentTime);
+          gain.gain.setValueAtTime(0.05, ctx.currentTime);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.05);
         } else if (type === 'success') {
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(523.25, now);
-          osc.frequency.setValueAtTime(659.25, now + 0.08);
-          gain.gain.setValueAtTime(0.15, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-          osc.start(now);
-          osc.stop(now + 0.25);
+          osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.15);
+          gain.gain.setValueAtTime(0.1, ctx.currentTime);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.2);
         } else if (type === 'boom') {
           osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(150, now);
-          osc.frequency.exponentialRampToValueAtTime(40, now + 0.4);
-          gain.gain.setValueAtTime(0.3, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-          osc.start(now);
-          osc.stop(now + 0.4);
-        } else if (type === 'win') {
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(523.25, now);
-          osc.frequency.setValueAtTime(659.25, now + 0.1);
-          osc.frequency.setValueAtTime(783.99, now + 0.2);
-          osc.frequency.setValueAtTime(1046.50, now + 0.3);
-          gain.gain.setValueAtTime(0.2, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
-          osc.start(now);
-          osc.stop(now + 0.6);
+          osc.frequency.setValueAtTime(150, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.4);
+          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.4);
         }
       } catch (e) {
-        console.log('Audio error', e);
+        // Silent fallback if audio context blocked
       }
     }
 
-    function toggleSound() {
-      isSoundOn = !isSoundOn;
-      const icon = document.getElementById('sound-icon');
-      if (isSoundOn) {
-        icon.className = 'fa-solid fa-volume-high text-amber-400';
-      } else {
-        icon.className = 'fa-solid fa-volume-xmark text-rose-400';
-      }
-    }
-
-    /* =========================================================================
-       4. NAVIGATION & SCREEN MANAGER
-       ========================================================================= */
+    // Helper: Screen Router
     function showScreen(screenId) {
-      playSound('click');
       const screens = [
         'screen-role-select',
         'screen-host-login',
-        'screen-host-lobby',
+        'screen-host-config',
         'screen-host-dashboard',
         'screen-player-join',
         'screen-player-waiting',
-        'screen-player-gameplay',
-        'screen-finished'
+        'screen-player-game'
       ];
-
       screens.forEach(id => {
         const el = document.getElementById(id);
-        if (el) {
-          if (id === screenId) {
-            el.classList.remove('hidden');
-          } else {
-            el.classList.add('hidden');
-          }
-        }
+        if (el) el.classList.add('hidden');
       });
+      const target = document.getElementById(screenId);
+      if (target) target.classList.remove('hidden');
     }
 
-    /* =========================================================================
-       5. GAME LOGIC EVALUATORS
-       ========================================================================= */
-    function generateSecretCode(digitsCount) {
-      const nums = ['0','1','2','3','4','5','6','7','8','9'];
-      for (let i = nums.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [nums[i], nums[j]] = [nums[j], nums[i]];
-      }
-      return nums.slice(0, digitsCount).join('');
+    function goToLandingScreen() {
+      currentRole = null;
+      document.getElementById('nav-room-badge').classList.add('hidden');
+      showScreen('screen-role-select');
     }
 
-    function evaluatePosisiBenar(secretCode, guess) {
-      let posisiBenar = 0;
-      let angkaBenar = 0;
-
-      const secretArr = secretCode.split('');
-      const guessArr = guess.split('');
-
-      for (let i = 0; i < secretArr.length; i++) {
-        if (guessArr[i] === secretArr[i]) {
-          posisiBenar++;
-        }
-        if (secretArr.includes(guessArr[i])) {
-          angkaBenar++;
-        }
-      }
-      return { posisiBenar, angkaBenar };
-    }
-
-    /* =========================================================================
-       6. HOST LOGIC
-       ========================================================================= */
-    function initHostSetup() {
+    // --- HOST AUTHENTICATION FLOW ---
+    function goToHostAuthOrConfig() {
+      currentRole = 'HOST';
       const user = auth.currentUser;
-      if (!user) {
+      if (user) {
+        document.getElementById('btn-host-logout').classList.remove('hidden');
+        showScreen('screen-host-config');
+      } else {
+        document.getElementById('btn-host-logout').classList.add('hidden');
         showScreen('screen-host-login');
-        document.getElementById('host-login-error').innerText = '';
-        return;
       }
-
-      isHost = true;
-      selectGameType('POSISI_BENAR');
-      selectDigitMode(3);
-      showScreen('screen-host-lobby');
-      document.getElementById('host-setup-card').classList.remove('hidden');
-      document.getElementById('host-active-lobby').classList.add('hidden');
     }
 
     function handleHostLogin(e) {
       e.preventDefault();
-      playSound('click');
+      const email = document.getElementById('login-email').value.trim();
+      const pass = document.getElementById('login-password').value;
+      const errBox = document.getElementById('host-login-error');
+      errBox.classList.add('hidden');
 
-      const email = document.getElementById('input-host-email').value.trim();
-      const password = document.getElementById('input-host-password').value.trim();
-      const errorEl = document.getElementById('host-login-error');
-
-      errorEl.innerText = 'Memverifikasi akun panitia...';
-
-      auth.signInWithEmailAndPassword(email, password)
+      auth.signInWithEmailAndPassword(email, pass)
         .then(() => {
-          errorEl.innerText = '';
-          isHost = true;
-          selectGameType('POSISI_BENAR');
-          selectDigitMode(3);
-          showScreen('screen-host-lobby');
-          document.getElementById('host-setup-card').classList.remove('hidden');
-          document.getElementById('host-active-lobby').classList.add('hidden');
+          document.getElementById('btn-host-logout').classList.remove('hidden');
+          showScreen('screen-host-config');
         })
-        .catch((error) => {
-          console.error("Login Error:", error);
-          let msg = 'Gagal login. Periksa email & password Anda!';
-          if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-            msg = 'Email atau password panitia tidak sesuai!';
-          } else if (error.code === 'auth/invalid-email') {
-            msg = 'Format email tidak valid!';
-          }
-          errorEl.innerText = msg;
+        .catch(err => {
+          errBox.innerText = 'Login gagal: ' + (err.message || 'Email/password salah.');
+          errBox.classList.remove('hidden');
         });
     }
 
     function handleHostLogout() {
-      if (confirm('Apakah Anda yakin ingin keluar dari akun Host?')) {
-        auth.signOut().then(() => {
-          isHost = false;
-          showScreen('screen-role-select');
-        });
-      }
+      auth.signOut().then(() => {
+        document.getElementById('btn-host-logout').classList.add('hidden');
+        goToLandingScreen();
+      });
     }
 
+    // --- GAME TYPE & PARAMETER SELECTION ---
     function selectGameType(type) {
-      playSound('click');
       selectedGameType = type;
-      const tabPosisi = document.getElementById('tab-game-posisi');
-      const tabBoom = document.getElementById('tab-game-boom');
-      const optsPosisi = document.getElementById('options-posisi-benar');
-      const optsBoom = document.getElementById('options-angka-boom');
+      const cardPos = document.getElementById('card-game-posisi');
+      const cardBoom = document.getElementById('card-game-boom');
+      const badgePos = document.getElementById('badge-game-posisi');
+      const badgeBoom = document.getElementById('badge-game-boom');
+      const optPos = document.getElementById('options-posisi-benar');
+      const optBoom = document.getElementById('options-angka-boom');
 
       if (type === 'POSISI_BENAR') {
-        tabPosisi.className = 'py-3 px-4 rounded-2xl border-4 border-purple-500 bg-purple-600/30 font-bold fredoka text-purple-200 flex flex-col items-center gap-1 transition';
-        tabBoom.className = 'py-3 px-4 rounded-2xl border-4 border-slate-700 bg-slate-800/50 font-bold fredoka text-slate-400 flex flex-col items-center gap-1 transition';
-        optsPosisi.classList.remove('hidden');
-        optsBoom.classList.add('hidden');
+        cardPos.className = "cursor-pointer p-5 rounded-2xl bg-slate-950 border-2 border-indigo-500/80 hover:border-indigo-400 transition flex flex-col justify-between space-y-3 relative overflow-hidden";
+        cardBoom.className = "cursor-pointer p-5 rounded-2xl bg-slate-950 border-2 border-slate-800 hover:border-indigo-500/50 transition flex flex-col justify-between space-y-3 relative overflow-hidden";
+        badgePos.classList.remove('hidden');
+        badgeBoom.classList.add('hidden');
+        optPos.classList.remove('hidden');
+        optBoom.classList.add('hidden');
       } else {
-        tabBoom.className = 'py-3 px-4 rounded-2xl border-4 border-rose-500 bg-rose-600/30 font-bold fredoka text-rose-200 flex flex-col items-center gap-1 transition';
-        tabPosisi.className = 'py-3 px-4 rounded-2xl border-4 border-slate-700 bg-slate-800/50 font-bold fredoka text-slate-400 flex flex-col items-center gap-1 transition';
-        optsBoom.classList.remove('hidden');
-        optsPosisi.classList.add('hidden');
+        cardBoom.className = "cursor-pointer p-5 rounded-2xl bg-slate-950 border-2 border-indigo-500/80 hover:border-indigo-400 transition flex flex-col justify-between space-y-3 relative overflow-hidden";
+        cardPos.className = "cursor-pointer p-5 rounded-2xl bg-slate-950 border-2 border-slate-800 hover:border-indigo-500/50 transition flex flex-col justify-between space-y-3 relative overflow-hidden";
+        badgeBoom.classList.remove('hidden');
+        badgePos.classList.add('hidden');
+        optBoom.classList.remove('hidden');
+        optPos.classList.add('hidden');
       }
     }
 
     function selectDigitMode(mode) {
-      playSound('click');
       selectedDigitMode = mode;
-      const btn3 = document.getElementById('btn-mode-3');
-      const btn4 = document.getElementById('btn-mode-4');
-
+      const btn3 = document.getElementById('btn-digit-3');
+      const btn4 = document.getElementById('btn-digit-4');
       if (mode === 3) {
-        btn3.className = 'py-3 px-3 rounded-xl border-2 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 text-sm';
-        btn4.className = 'py-3 px-3 rounded-xl border-2 border-slate-600 bg-slate-800 font-bold fredoka text-slate-400 text-sm';
+        btn3.className = "py-2.5 rounded-xl bg-indigo-600 text-white font-extrabold text-sm border border-indigo-400 transition";
+        btn4.className = "py-2.5 rounded-xl bg-slate-900 text-slate-400 hover:text-white font-extrabold text-sm border border-slate-800 transition";
       } else {
-        btn4.className = 'py-3 px-3 rounded-xl border-2 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 text-sm';
-        btn3.className = 'py-3 px-3 rounded-xl border-2 border-slate-600 bg-slate-800 font-bold fredoka text-slate-400 text-sm';
+        btn4.className = "py-2.5 rounded-xl bg-indigo-600 text-white font-extrabold text-sm border border-indigo-400 transition";
+        btn3.className = "py-2.5 rounded-xl bg-slate-900 text-slate-400 hover:text-white font-extrabold text-sm border border-slate-800 transition";
       }
     }
 
     function selectBoomRange(range) {
-      playSound('click');
       selectedBoomRange = range;
-      const b100 = document.getElementById('btn-boom-100');
-      const b500 = document.getElementById('btn-boom-500');
-      const b1000 = document.getElementById('btn-boom-1000');
-
-      [b100, b500, b1000].forEach(btn => {
-        btn.className = 'py-3 px-2 rounded-xl border-2 border-slate-600 bg-slate-800 font-bold fredoka text-slate-400 text-xs';
+      [100, 500, 1000].forEach(r => {
+        const btn = document.getElementById(`btn-boom-${r}`);
+        if (r === range) {
+          btn.className = "py-2.5 rounded-xl bg-indigo-600 text-white font-extrabold text-xs border border-indigo-400 transition";
+        } else {
+          btn.className = "py-2.5 rounded-xl bg-slate-900 text-slate-400 hover:text-white font-extrabold text-xs border border-slate-800 transition";
+        }
       });
-
-      if (range === 100) {
-        b100.className = 'py-3 px-2 rounded-xl border-2 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 text-xs';
-      } else if (range === 500) {
-        b500.className = 'py-3 px-2 rounded-xl border-2 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 text-xs';
-      } else {
-        b1000.className = 'py-3 px-2 rounded-xl border-2 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 text-xs';
-      }
     }
 
-    function createHostRoom() {
-      playSound('click');
+    // Secret Generators
+    function generateUniqueCode(digitCount) {
+      const digits = [0,1,2,3,4,5,6,7,8,9];
+      for (let i = digits.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [digits[i], digits[j]] = [digits[j], digits[i]];
+      }
+      return digits.slice(0, digitCount).join('');
+    }
+
+    function generateSecretNumber(maxRange) {
+      return Math.floor(Math.random() * (maxRange + 1));
+    }
+
+    // --- CREATE NEW GAME (HOST) ---
+    function createNewGameAsHost() {
       currentRoomPin = Math.floor(100000 + Math.random() * 900000).toString();
-      
-      let roomPayload = {
+      let secretCode = '';
+
+      if (selectedGameType === 'POSISI_BENAR') {
+        secretCode = generateUniqueCode(selectedDigitMode);
+      } else {
+        secretCode = generateSecretNumber(selectedBoomRange).toString();
+      }
+
+      const roomData = {
         pin: currentRoomPin,
         gameType: selectedGameType,
+        digitMode: selectedDigitMode,
+        boomRange: selectedBoomRange,
+        secretCode: secretCode,
         status: 'LOBBY',
-        timer: 15,
-        sessionActive: false,
         sessionNumber: 1,
+        timer: 15,
+        lowerBound: 0,
+        upperBound: selectedBoomRange,
         createdAt: firebase.database.ServerValue.TIMESTAMP
       };
 
-      if (selectedGameType === 'POSISI_BENAR') {
-        currentSecretCode = generateSecretCode(selectedDigitMode);
-        roomPayload.digitMode = selectedDigitMode;
-        roomPayload.secretCode = currentSecretCode;
-      } else {
-        currentBoomSecret = Math.floor(Math.random() * (selectedBoomRange + 1));
+      db.ref(`rooms/${currentRoomPin}`).set(roomData)
+        .then(() => {
+          document.getElementById('nav-pin-val').innerText = currentRoomPin;
+          document.getElementById('nav-room-badge').classList.remove('hidden');
 
-        roomPayload.boomRange = selectedBoomRange;
-        roomPayload.secretCode = currentBoomSecret.toString();
-        roomPayload.boomLower = 0;
-        roomPayload.boomUpper = selectedBoomRange;
-      }
+          document.getElementById('host-display-pin').innerText = currentRoomPin;
+          document.getElementById('host-lobby-game-title').innerText = selectedGameType === 'POSISI_BENAR' 
+            ? `🎯 Posisi Benar (${selectedDigitMode} Digit)` 
+            : `💣 Angka Boom (0 - ${selectedBoomRange})`;
 
-      roomRef = db.ref('rooms/' + currentRoomPin);
-      roomRef.set(roomPayload);
+          // Render QR Code safely
+          const qrContainer = document.getElementById('qrcode-container');
+          qrContainer.innerHTML = '';
+          if (typeof QRCode !== 'undefined') {
+            new QRCode(qrContainer, {
+              text: window.location.origin + window.location.pathname + '?pin=' + currentRoomPin,
+              width: 120,
+              height: 120,
+              colorDark : "#020617",
+              colorLight : "#ffffff"
+            });
+          }
 
-      document.getElementById('host-setup-card').classList.add('hidden');
-      document.getElementById('host-active-lobby').classList.remove('hidden');
-      document.getElementById('display-game-pin').innerText = currentRoomPin;
-
-      const badgeText = selectedGameType === 'POSISI_BENAR' 
-        ? `Posisi Benar (${selectedDigitMode} Digit)` 
-        : `Angka Boom (Range 0 - ${selectedBoomRange})`;
-      document.getElementById('display-game-type-badge').innerText = badgeText;
-
-      const currentUrl = window.location.href.split('?')[0];
-      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl + '?pin=' + currentRoomPin)}`;
-      document.getElementById('qr-code-img').src = qrUrl;
-
-      listenLobbyPlayers();
+          listenToHostLobby();
+          showScreen('screen-host-dashboard');
+          document.getElementById('host-subscreen-lobby').classList.remove('hidden');
+          document.getElementById('host-subscreen-playing').classList.add('hidden');
+          document.getElementById('host-subscreen-finished').classList.add('hidden');
+        });
     }
 
-    function listenLobbyPlayers() {
-      db.ref(`rooms/${currentRoomPin}/players`).on('value', (snapshot) => {
-        const playersData = snapshot.val() || {};
-        const playerList = Object.values(playersData);
-        
-        document.getElementById('lobby-player-count').innerText = playerList.length;
-        const grid = document.getElementById('lobby-players-grid');
+    function listenToHostLobby() {
+      db.ref(`rooms/${currentRoomPin}/players`).on('value', snapshot => {
+        const players = snapshot.val() || {};
+        const count = Object.keys(players).length;
+        document.getElementById('host-player-count').innerText = count;
 
-        if (playerList.length === 0) {
-          grid.innerHTML = `<p class="text-slate-400 text-sm italic w-full text-center py-4">Menunggu peserta memasukkan PIN...</p>`;
-          return;
+        const listContainer = document.getElementById('host-players-list');
+        if (count === 0) {
+          listContainer.innerHTML = `<span class="text-xs text-slate-500 italic p-2">Menunggu peserta memasukkan PIN...</span>`;
+        } else {
+          listContainer.innerHTML = Object.values(players).map(p => `
+            <span class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold text-emerald-400 flex items-center gap-1.5 animate-slide-in">
+              <i class="fa-solid fa-user text-[10px]"></i> ${escapeHtml(p.nickname)}
+            </span>
+          `).join('');
         }
-
-        grid.innerHTML = playerList.map(p => `
-          <div class="px-3.5 py-1.5 rounded-xl bg-purple-600/30 border border-purple-400/40 text-amber-300 font-bold text-sm flex items-center gap-2 animate-slide-in">
-            <i class="fa-solid fa-user-astronaut text-purple-300 text-xs"></i> ${escapeHtml(p.nickname)}
-          </div>
-        `).join('');
       });
     }
 
-    function startHostGame() {
-      playSound('success');
-      currentSessionNumber = 1;
-
-      roomRef.update({
+    // --- START GAME & GAME LOOP (HOST) ---
+    function startGameAsHost() {
+      db.ref(`rooms/${currentRoomPin}`).update({
         status: 'PLAYING',
-        timer: 15,
-        sessionActive: true,
-        sessionNumber: 1
+        sessionNumber: 1,
+        timer: 15
+      }).then(() => {
+        document.getElementById('host-subscreen-lobby').classList.add('hidden');
+        document.getElementById('host-subscreen-playing').classList.remove('hidden');
+        
+        setupHostPlayingDashboard();
+        startHostTimer();
+        listenToHostGuesses();
       });
+    }
 
-      showScreen('screen-host-dashboard');
-      document.getElementById('dash-pin').innerText = currentRoomPin;
-      document.getElementById('dash-session-num').innerText = '#' + currentSessionNumber;
+    function setupHostPlayingDashboard() {
+      const isPosisi = selectedGameType === 'POSISI_BENAR';
+      document.getElementById('host-game-badge').innerText = isPosisi ? `🎯 Posisi Benar (${selectedDigitMode}D)` : `💣 Angka Boom (0-${selectedBoomRange})`;
+      document.getElementById('host-active-game-title').innerText = isPosisi ? 'Posisi Benar' : 'Angka Boom';
 
-      const titleEl = document.getElementById('dash-game-title');
-      const feedColFeedback = document.getElementById('feed-col-feedback');
-      const boomBoundsCard = document.getElementById('host-boom-bounds-card');
-
-      if (selectedGameType === 'POSISI_BENAR') {
-        titleEl.innerText = `SESI MONITORING: POSISI BENAR (${selectedDigitMode} DIGIT)`;
-        feedColFeedback.innerText = "ANGKA BENAR";
-        boomBoundsCard.classList.add('hidden');
+      const boomCard = document.getElementById('host-boom-bounds-container');
+      if (isPosisi) {
+        boomCard.classList.add('hidden');
       } else {
-        titleEl.innerText = `SESI MONITORING: ANGKA BOOM (0 - ${selectedBoomRange})`;
-        feedColFeedback.innerText = "UMPAN BALIK / STATUS";
-        boomBoundsCard.classList.remove('hidden');
+        boomCard.classList.remove('hidden');
         document.getElementById('host-boom-lower').innerText = 0;
         document.getElementById('host-boom-upper').innerText = selectedBoomRange;
       }
-      
-      startHostTimer();
-      listenHostFeed();
+
+      const thead = document.getElementById('host-table-thead');
+      if (isPosisi) {
+        thead.innerHTML = `
+          <th class="py-2.5 px-3">SESI</th>
+          <th class="py-2.5 px-4 text-left">NICKNAME</th>
+          <th class="py-2.5 px-3">TEBAKAN</th>
+          <th class="py-2.5 px-3 text-cyan-400">ANGKA BENAR</th>
+        `;
+      } else {
+        thead.innerHTML = `
+          <th class="py-2.5 px-3">SESI</th>
+          <th class="py-2.5 px-4 text-left">NICKNAME</th>
+          <th class="py-2.5 px-3">TEBAKAN</th>
+          <th class="py-2.5 px-3 text-amber-400">STATUS & UMPAN BALIK</th>
+        `;
+      }
     }
 
     function startHostTimer() {
-      if (activeTimerInterval) clearInterval(activeTimerInterval);
-      
-      let timeLeft = 15;
-      document.getElementById('dash-timer').innerText = timeLeft + 's';
-      
-      roomRef.update({ timer: timeLeft, sessionActive: true });
+      if (hostTimerInterval) clearInterval(hostTimerInterval);
+      hostCurrentTimer = 15;
 
-      activeTimerInterval = setInterval(() => {
-        timeLeft--;
-        if (timeLeft >= 0) {
-          document.getElementById('dash-timer').innerText = timeLeft + 's';
-          roomRef.update({ timer: timeLeft, sessionActive: timeLeft > 0 });
-          if (timeLeft <= 5 && timeLeft > 0) playSound('tick');
-        } else {
-          clearInterval(activeTimerInterval);
-          roomRef.update({ timer: 0, sessionActive: false });
+      db.ref(`rooms/${currentRoomPin}`).update({ timer: 15 });
+
+      hostTimerInterval = setInterval(() => {
+        hostCurrentTimer--;
+        if (hostCurrentTimer < 0) hostCurrentTimer = 0;
+
+        document.getElementById('host-timer-val').innerText = `${hostCurrentTimer}s`;
+        db.ref(`rooms/${currentRoomPin}`).update({ timer: hostCurrentTimer });
+
+        if (hostCurrentTimer === 0) {
+          clearInterval(hostTimerInterval);
+          playSound('tick');
+          // Trigger delayed reveal update on projector!
+          revealHostDashboardSessionResults();
         }
       }, 1000);
     }
 
-    function nextSession15s() {
-      playSound('click');
-      currentSessionNumber++;
-      document.getElementById('dash-session-num').innerText = '#' + currentSessionNumber;
-
-      roomRef.update({
-        sessionNumber: currentSessionNumber,
-        timer: 15,
-        sessionActive: true
-      });
-
-      startHostTimer();
-    }
-
-    function restartGameAsHost() {
-      if (!currentRoomPin) return;
-      playSound('click');
-
-      currentSessionNumber = 1;
-      if (activeTimerInterval) clearInterval(activeTimerInterval);
-
-      // Clear previous guesses in Firebase
-      db.ref(`rooms/${currentRoomPin}/guesses`).remove();
-
-      let resetData = {
-        status: 'LOBBY',
-        sessionNumber: 1,
-        timer: 15,
-        sessionActive: false,
-        winner: null
-      };
-
-      if (selectedGameType === 'POSISI_BENAR') {
-        currentSecretCode = generateSecretCode(selectedDigitMode);
-        resetData.secretCode = currentSecretCode;
-      } else {
-        currentBoomSecret = Math.floor(Math.random() * (selectedBoomRange + 1));
-        resetData.secretCode = currentBoomSecret.toString();
-        resetData.boomLower = 0;
-        resetData.boomUpper = selectedBoomRange;
-      }
-
-      // Reset room state in Firebase
-      roomRef.update(resetData);
-
-      // Show Host Lobby screen
-      showScreen('screen-host-lobby');
-      document.getElementById('host-setup-card').classList.add('hidden');
-      document.getElementById('host-active-lobby').classList.remove('hidden');
-    }
-
-    function endHostGameConfirm() {
-      if (confirm('Apakah Anda yakin ingin mengakhiri permainan sekarang?')) {
-        if (activeTimerInterval) clearInterval(activeTimerInterval);
-        roomRef.update({
-          status: 'FINISHED',
-          sessionActive: false,
-          winner: {
-            nickname: 'Host (Diakhiri)',
-            secretCode: currentSecretCode || currentBoomSecret
-          }
-        });
-      }
-    }
-
-    /* =========================================================================
-       7. HOST LIVE FEED (DELAYED PROJECTOR REVEAL & RECALCULATED BOUNDS AT 0s)
-       ========================================================================= */
-    function listenHostFeed() {
-      guessesRef = db.ref(`rooms/${currentRoomPin}/guesses`);
-
-      // Combined listener for Room State + Guesses
-      db.ref(`rooms/${currentRoomPin}`).on('value', (snapshot) => {
-        const roomData = snapshot.val();
-        if (!roomData) return;
-
-        const sessionActive = roomData.sessionActive === true;
-        const timerVal = roomData.timer !== undefined ? roomData.timer : 0;
-        const currentSess = roomData.sessionNumber || 1;
-        const isTimerRunning = sessionActive && timerVal > 0;
-
-        // Fetch Guesses
-        const guessesObj = roomData.guesses || {};
-        const allGuesses = Object.values(guessesObj);
-
-        // 1. Live Submissions Counter for Current Active Session
-        const currentSessionGuesses = allGuesses.filter(g => g.sessionNumber === currentSess);
-        const submittedCount = currentSessionGuesses.length;
-
-        const counterText = document.getElementById('host-live-counter-text');
-        const badgeStatusText = document.getElementById('host-reveal-status-text');
-        const badgeBox = document.getElementById('host-reveal-badge');
-
-        if (counterText) {
-          counterText.innerText = `${submittedCount} Peserta Sudah Mengirim Tebakan (Sesi #${currentSess})`;
-        }
-
-        if (isTimerRunning) {
-          if (badgeStatusText) badgeStatusText.innerText = 'Tebakan Terkunci (Revealed Saat 0s)';
-          if (badgeBox) badgeBox.className = 'px-3.5 py-1.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40 text-xs font-bold flex items-center gap-2';
-        } else {
-          if (badgeStatusText) badgeStatusText.innerText = 'Tebakan Sesi Terbuka!';
-          if (badgeBox) badgeBox.className = 'px-3.5 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-xs font-bold flex items-center gap-2';
-        }
-
-        // 2. Filter Guesses for Host Projector FIFO Feed
-        // - While timer > 0s (active session): Show ONLY revealed guesses from completed previous sessions (sessionNumber < currentSess)
-        // - When timer reaches 0s (session ended): Show all guesses up to completed session (sessionNumber <= currentSess)
-        let visibleGuesses = [];
-        if (isTimerRunning) {
-          visibleGuesses = allGuesses.filter(g => g.sessionNumber < currentSess);
-        } else {
-          visibleGuesses = allGuesses.filter(g => g.sessionNumber <= currentSess);
-        }
-
-        // Sort newest first
-        visibleGuesses.sort((a, b) => b.timestamp - a.timestamp);
-        const feed10 = visibleGuesses.slice(0, 10);
-        const container = document.getElementById('host-feed-list');
-
-        if (feed10.length === 0) {
-          container.innerHTML = `
-            <p id="feed-empty-msg" class="text-slate-400 text-sm text-center py-16 italic">
-              ${isTimerRunning 
-                ? `Tebakan Sesi #${currentSess} sedang berjalan. Detail tebakan akan terbuka saat timer 0s...` 
-                : 'Belum ada tebakan dikirim.'}
-            </p>`;
-        } else {
-          container.innerHTML = feed10.map((g) => {
-            let feedbackBadge = '';
-
-            if (selectedGameType === 'POSISI_BENAR') {
-              feedbackBadge = `<span class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-black text-xs">${g.angkaBenar}</span>`;
-            } else {
-              if (g.boomStatus === 'BOOM') {
-                feedbackBadge = `<span class="px-3 py-1 rounded-full bg-rose-500/30 text-rose-300 border border-rose-500/60 font-black text-xs animate-bounce">💣 BOOM!</span>`;
-              } else if (g.boomStatus === 'BATAS_BAWAH') {
-                feedbackBadge = `<span class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-black text-xs">▲ Batas Bawah Baru</span>`;
-              } else if (g.boomStatus === 'BATAS_ATAS') {
-                feedbackBadge = `<span class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 font-black text-xs">▼ Batas Atas Baru</span>`;
-              } else {
-                feedbackBadge = `<span class="px-3 py-1 rounded-full bg-slate-700 text-slate-300 text-xs">Mendekati</span>`;
-              }
-            }
-
-            return `
-              <div class="grid grid-cols-12 gap-2 px-4 py-3 bg-slate-800/90 hover:bg-slate-800 border border-white/10 rounded-2xl items-center text-center font-bold text-sm animate-slide-in">
-                <div class="col-span-2 text-cyan-400 font-extrabold text-xs">#${g.sessionNumber || 1}</div>
-                <div class="col-span-4 text-left text-amber-300 font-extrabold truncate flex items-center gap-1.5">
-                  <i class="fa-solid fa-user-circle text-purple-400"></i> ${escapeHtml(g.nickname)}
-                </div>
-                <div class="col-span-3 font-black text-white text-base tracking-widest bg-slate-950/60 py-1 rounded-xl border border-white/5">
-                  ${g.guess}
-                </div>
-                <div class="col-span-3">
-                  ${feedbackBadge}
-                </div>
-              </div>
-            `;
-          }).join('');
-        }
-
-        // 3. Recalculate Angka Boom Bounds for Host Projector
-        if (selectedGameType === 'ANGKA_BOOM') {
-          let calcLower = 0;
-          let calcUpper = selectedBoomRange;
-          const secretVal = parseInt(currentSecretCode || roomData.secretCode, 10);
-
-          // Use eligible guesses to determine projector bounds:
-          // Fixed during active 15s session, recalculated upon reaching 0s!
-          const eligibleBoomGuesses = isTimerRunning 
-            ? allGuesses.filter(g => g.sessionNumber < currentSess)
-            : allGuesses.filter(g => g.sessionNumber <= currentSess);
-
-          eligibleBoomGuesses.sort((a, b) => a.timestamp - b.timestamp);
-
-          eligibleBoomGuesses.forEach(g => {
-            const num = parseInt(g.guess, 10);
-            if (!isNaN(num)) {
-              if (num < secretVal && num > calcLower) calcLower = num;
-              if (num > secretVal && num < calcUpper) calcUpper = num;
-            }
-          });
-
-          document.getElementById('host-boom-lower').innerText = calcLower;
-          document.getElementById('host-boom-upper').innerText = calcUpper;
-
-          // When timer hits 0s, update Firebase bounds so player screens also update for next round
-          if (!isTimerRunning && (roomData.boomLower !== calcLower || roomData.boomUpper !== calcUpper)) {
-            db.ref(`rooms/${currentRoomPin}`).update({ boomLower: calcLower, boomUpper: calcUpper });
-          }
-        }
-
-        // 4. Winner Checking
-        if (roomData.status === 'FINISHED' && roomData.winner) {
-          triggerWinnerCelebration(roomData.winner.nickname, roomData.secretCode || currentSecretCode || currentBoomSecret);
-        } else {
-          if (selectedGameType === 'POSISI_BENAR') {
-            const winningGuess = allGuesses.find(g => g.posisiBenar === selectedDigitMode);
-            if (winningGuess) {
-              if (activeTimerInterval) clearInterval(activeTimerInterval);
-              roomRef.update({
-                status: 'FINISHED',
-                sessionActive: false,
-                winner: { nickname: winningGuess.nickname, guess: winningGuess.guess }
-              });
-            }
-          } else {
-            const boomWinner = allGuesses.find(g => g.boomStatus === 'BOOM');
-            if (boomWinner) {
-              if (activeTimerInterval) clearInterval(activeTimerInterval);
-              roomRef.update({
-                status: 'FINISHED',
-                sessionActive: false,
-                winner: { nickname: boomWinner.nickname, guess: boomWinner.guess }
-              });
-            }
-          }
-        }
+    function nextSessionAsHost() {
+      hostSessionNumber++;
+      document.getElementById('host-session-badge').innerText = `SESI #${hostSessionNumber}`;
+      
+      db.ref(`rooms/${currentRoomPin}`).update({
+        sessionNumber: hostSessionNumber,
+        timer: 15
+      }).then(() => {
+        startHostTimer();
       });
     }
 
-    /* =========================================================================
-       8. PESERTA LOGIC & REALTIME SYNC
-       ========================================================================= */
-    function joinGameAsPlayer(e) {
-      e.preventDefault();
-      playSound('click');
+    function listenToHostGuesses() {
+      db.ref(`rooms/${currentRoomPin}/guesses`).on('value', snapshot => {
+        const guesses = snapshot.val() || {};
+        const guessArray = Object.values(guesses);
 
-      const pin = document.getElementById('input-pin').value.trim();
-      const nickname = document.getElementById('input-nickname').value.trim();
+        // Count submitted for current session
+        const currentSessionGuesses = guessArray.filter(g => (g.sessionNumber || 1) === hostSessionNumber);
+        document.getElementById('host-submitted-count-text').innerText = `${currentSessionGuesses.length} Peserta Sudah Mengirim Tebakan Sesi Ini`;
 
-      if (!pin || !nickname) return;
-
-      currentRoomPin = pin;
-      localPlayerNickname = nickname;
-
-      db.ref(`rooms/${pin}`).once('value', (snapshot) => {
-        const roomData = snapshot.val();
-        if (!roomData) {
-          alert('Game PIN tidak ditemukan! Mohon periksa kembali PIN pada layar Host.');
+        // Check if anyone won immediately
+        const winner = guessArray.find(g => g.isWin === true);
+        if (winner) {
+          triggerHostWinSequence(winner);
           return;
         }
 
-        db.ref(`rooms/${pin}/players/${localPlayerId}`).set({
-          nickname: nickname,
-          joinedAt: firebase.database.ServerValue.TIMESTAMP
-        });
-
-        showScreen('screen-player-waiting');
-        document.getElementById('wait-player-name').innerText = 'Nickname: ' + nickname;
-
-        listenPlayerRoomStatus(pin);
+        // If timer is 0, update projector feed immediately
+        if (hostCurrentTimer === 0) {
+          revealHostDashboardSessionResults();
+        }
       });
     }
 
-    function listenPlayerRoomStatus(pin) {
-      db.ref(`rooms/${pin}`).on('value', (snapshot) => {
+    function revealHostDashboardSessionResults() {
+      db.ref(`rooms/${currentRoomPin}`).once('value', snapshot => {
+        const room = snapshot.val() || {};
+        const guesses = room.guesses || {};
+        let guessArray = Object.values(guesses);
+
+        // Sort by timestamp
+        guessArray.sort((a,b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+        // Take last 10 guesses (FIFO Display)
+        const feed10 = guessArray.slice(-10);
+
+        const tbody = document.getElementById('host-table-tbody');
+        if (feed10.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-slate-500 italic">Belum ada tebakan yang dikirim.</td></tr>`;
+          return;
+        }
+
+        if (selectedGameType === 'POSISI_BENAR') {
+          tbody.innerHTML = feed10.map(g => `
+            <tr class="border-b border-slate-800/40 hover:bg-slate-800/20 transition">
+              <td class="py-2.5 px-3 text-cyan-400 font-bold">#${g.sessionNumber || 1}</td>
+              <td class="py-2.5 px-4 text-left font-sans font-semibold text-white">${escapeHtml(g.nickname)}</td>
+              <td class="py-2.5 px-3 text-amber-300 font-black tracking-widest text-sm">${g.guess}</td>
+              <td class="py-2.5 px-3">
+                <span class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-black text-xs">
+                  ${g.angkaBenar}
+                </span>
+              </td>
+            </tr>
+          `).join('');
+        } else {
+          // ANGKA BOOM BOUNDS CALCULATION
+          let lower = 0;
+          let upper = selectedBoomRange;
+          const secretVal = parseInt(room.secretCode, 10);
+
+          guessArray.forEach(g => {
+            const num = parseInt(g.guess, 10);
+            if (!isNaN(num)) {
+              if (num < secretVal && num > lower) lower = num;
+              if (num > secretVal && num < upper) upper = num;
+            }
+          });
+
+          document.getElementById('host-boom-lower').innerText = lower;
+          document.getElementById('host-boom-upper').innerText = upper;
+
+          db.ref(`rooms/${currentRoomPin}`).update({
+            lowerBound: lower,
+            upperBound: upper
+          });
+
+          tbody.innerHTML = feed10.map(g => {
+            let statusBadge = '';
+            if (g.boomStatus === 'BOOM') {
+              statusBadge = `<span class="px-3 py-1 rounded-full bg-rose-500/30 text-rose-300 border border-rose-500/60 font-black text-xs animate-bounce">💣 BOOM!</span>`;
+            } else if (g.boomStatus === 'BATAS_BAWAH') {
+              statusBadge = `<span class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-black text-xs">🔼 Batas Bawah Baru</span>`;
+            } else if (g.boomStatus === 'BATAS_ATAS') {
+              statusBadge = `<span class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-black text-xs">🔽 Batas Atas Baru</span>`;
+            } else {
+              statusBadge = `<span class="px-3 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700 font-bold text-xs">⚠️ Di Luar Rentang</span>`;
+            }
+
+            return `
+              <tr class="border-b border-slate-800/40 hover:bg-slate-800/20 transition">
+                <td class="py-2.5 px-3 text-cyan-400 font-bold">#${g.sessionNumber || 1}</td>
+                <td class="py-2.5 px-4 text-left font-sans font-semibold text-white">${escapeHtml(g.nickname)}</td>
+                <td class="py-2.5 px-3 text-amber-300 font-black tracking-widest text-sm">${g.guess}</td>
+                <td class="py-2.5 px-3">${statusBadge}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      });
+    }
+
+    function triggerHostWinSequence(winnerObj) {
+      if (hostTimerInterval) clearInterval(hostTimerInterval);
+
+      db.ref(`rooms/${currentRoomPin}`).update({
+        status: 'FINISHED',
+        winnerNickname: winnerObj.nickname
+      });
+
+      playSound('boom');
+      if (typeof confetti !== 'undefined') {
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+      }
+
+      document.getElementById('winner-nickname').innerText = winnerObj.nickname;
+      db.ref(`rooms/${currentRoomPin}/secretCode`).once('value', snap => {
+        document.getElementById('winner-secret-code').innerText = snap.val() || '----';
+      });
+
+      document.getElementById('host-subscreen-playing').classList.add('hidden');
+      document.getElementById('host-subscreen-finished').classList.remove('hidden');
+    }
+
+    function endGameAsHost() {
+      if (hostTimerInterval) clearInterval(hostTimerInterval);
+      db.ref(`rooms/${currentRoomPin}`).update({ status: 'FINISHED' });
+      
+      db.ref(`rooms/${currentRoomPin}/secretCode`).once('value', snap => {
+        document.getElementById('winner-nickname').innerText = 'Game Diakhiri Host';
+        document.getElementById('winner-secret-code').innerText = snap.val() || '----';
+        document.getElementById('host-subscreen-playing').classList.add('hidden');
+        document.getElementById('host-subscreen-finished').classList.remove('hidden');
+      });
+    }
+
+    function restartGameAsHost() {
+      let newSecret = selectedGameType === 'POSISI_BENAR' 
+        ? generateUniqueCode(selectedDigitMode) 
+        : generateSecretNumber(selectedBoomRange).toString();
+
+      db.ref(`rooms/${currentRoomPin}`).update({
+        status: 'LOBBY',
+        secretCode: newSecret,
+        sessionNumber: 1,
+        timer: 15,
+        lowerBound: 0,
+        upperBound: selectedBoomRange,
+        guesses: null
+      }).then(() => {
+        document.getElementById('host-subscreen-finished').classList.add('hidden');
+        document.getElementById('host-subscreen-lobby').classList.remove('hidden');
+      });
+    }
+
+    // --- PLAYER JOIN & GAMEPLAY FLOW ---
+    function goToPlayerJoin() {
+      currentRole = 'PLAYER';
+      document.getElementById('player-join-error').classList.add('hidden');
+      showScreen('screen-player-join');
+    }
+
+    function handlePlayerJoin(e) {
+      e.preventDefault();
+      const pin = document.getElementById('player-pin-input').value.trim();
+      const nick = document.getElementById('player-nickname-input').value.trim();
+      const errBox = document.getElementById('player-join-error');
+      errBox.classList.add('hidden');
+
+      if (!pin || pin.length !== 6) {
+        errBox.innerText = 'Game PIN harus 6 digit angka!';
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      db.ref(`rooms/${pin}`).once('value', snapshot => {
+        if (!snapshot.exists()) {
+          errBox.innerText = 'Game PIN tidak ditemukan!';
+          errBox.classList.remove('hidden');
+          return;
+        }
+
+        currentRoomPin = pin;
+        localPlayerNickname = nick;
+        document.getElementById('player-waiting-nickname').innerText = nick;
+        document.getElementById('nav-pin-val').innerText = pin;
+        document.getElementById('nav-room-badge').classList.remove('hidden');
+
+        // Register Player in Room
+        db.ref(`rooms/${pin}/players/${localPlayerId}`).set({
+          nickname: nick,
+          joinedAt: firebase.database.ServerValue.TIMESTAMP
+        });
+
+        listenToPlayerRoomState();
+        showScreen('screen-player-waiting');
+      });
+    }
+
+    function listenToPlayerRoomState() {
+      db.ref(`rooms/${currentRoomPin}`).on('value', snapshot => {
         const room = snapshot.val();
         if (!room) return;
 
         selectedGameType = room.gameType || 'POSISI_BENAR';
         selectedDigitMode = room.digitMode || 3;
         selectedBoomRange = room.boomRange || 1000;
-        currentSecretCode = room.secretCode || '';
-        currentSessionNumber = room.sessionNumber || 1;
 
-        const timerVal = room.timer !== undefined ? room.timer : 0;
-        currentTimerVal = timerVal;
-        const activeState = room.sessionActive === true && timerVal > 0;
-        isSessionActive = activeState;
-
-        // Update Header Badges
-        const timerEl = document.getElementById('player-timer');
-        const sessEl = document.getElementById('player-session-num');
-        if (sessEl) sessEl.innerText = '#' + currentSessionNumber;
-
-        if (timerEl) {
-          timerEl.innerText = timerVal + 's';
-          if (timerVal === 0) {
-            timerEl.classList.add('text-rose-400');
-            timerEl.classList.remove('text-amber-400');
-          } else {
-            timerEl.classList.remove('text-rose-400');
-            timerEl.classList.add('text-amber-400');
-          }
-        }
-
-        if (room.status === 'LOBBY') {
-          currentSessionNumber = 1;
-          hasSubmittedThisSession = false;
-          currentInputDigits = [];
-
-          // Auto-return player to waiting screen when room resets to LOBBY
-          const activeSec = document.querySelector('main > section:not(.hidden)');
-          const currentScreenId = activeSec ? activeSec.id : '';
-          if (currentScreenId === 'screen-player-gameplay' || currentScreenId === 'screen-finished') {
-            showScreen('screen-player-waiting');
-            document.getElementById('wait-player-name').innerText = 'Nickname: ' + localPlayerNickname;
-          }
+        if (room.status === 'LOBBY' || room.status === 'WAITING') {
+          playerSubmittedSessions = {};
+          showScreen('screen-player-waiting');
         } else if (room.status === 'PLAYING') {
-          const gameplayScreen = document.getElementById('screen-player-gameplay');
-          if (gameplayScreen.classList.contains('hidden')) {
-            showScreen('screen-player-gameplay');
-            document.getElementById('game-player-nickname').innerText = localPlayerNickname;
-            setupPlayerUIForGameType();
-          }
-
-          // Update Boom bounds on player screen
-          if (selectedGameType === 'ANGKA_BOOM') {
-            document.getElementById('player-boom-lower').innerText = room.boomLower !== undefined ? room.boomLower : 0;
-            document.getElementById('player-boom-upper').innerText = room.boomUpper !== undefined ? room.boomUpper : selectedBoomRange;
-          }
-
-          checkPlayerSessionSubmittedState();
-        } else if (room.status === 'FINISHED' && room.winner) {
-          triggerWinnerCelebration(room.winner.nickname, room.secretCode);
+          showScreen('screen-player-game');
+          updatePlayerGameplayUI(room);
+        } else if (room.status === 'FINISHED') {
+          alert(`Game telah berakhir! Pemenang: ${room.winnerNickname || 'Selesai'}`);
+          goToLandingScreen();
         }
       });
-
-      // Listen to guesses history
-      listenMyGuessesHistory();
     }
 
-    function setupPlayerUIForGameType() {
-      const modeText = document.getElementById('player-mode-digit-text');
+    function updatePlayerGameplayUI(room) {
+      const isPosisi = selectedGameType === 'POSISI_BENAR';
+      document.getElementById('player-mode-badge').innerText = isPosisi ? `Posisi Benar (${selectedDigitMode}D)` : `Angka Boom (0-${selectedBoomRange})`;
+      document.getElementById('player-timer-val').innerText = `${room.timer || 0}s`;
+
+      const boomCard = document.getElementById('player-boom-bounds-card');
+      if (isPosisi) {
+        boomCard.classList.add('hidden');
+      } else {
+        boomCard.classList.remove('hidden');
+        document.getElementById('player-boom-lower').innerText = room.lowerBound || 0;
+        document.getElementById('player-boom-upper').innerText = room.upperBound || selectedBoomRange;
+      }
+
+      const currentSess = room.sessionNumber || 1;
+      const timerVal = room.timer || 0;
+      const hasSubmitted = !!playerSubmittedSessions[currentSess];
+
+      const banner = document.getElementById('player-status-banner');
+
+      // Keypad Locking Logic
+      if (hasSubmitted) {
+        banner.className = "p-3 rounded-xl text-center text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
+        banner.innerText = `TEBAKAN SESI #${currentSess} TERKIRIM! (1/1) - Menunggu Sesi Berikutnya`;
+        banner.classList.remove('hidden');
+        disableKeypad(true);
+      } else if (timerVal === 0) {
+        banner.className = "p-3 rounded-xl text-center text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40";
+        banner.innerText = `SESI TERJEDA (0s) - Menunggu Host Melanjutkan Sesi`;
+        banner.classList.remove('hidden');
+        disableKeypad(true);
+      } else {
+        banner.classList.add('hidden');
+        disableKeypad(false);
+      }
+
+      setupPlayerKeypadAndTables();
+      renderPlayerHistoryTable(room.guesses || {});
+    }
+
+    function setupPlayerKeypadAndTables() {
+      const isPosisi = selectedGameType === 'POSISI_BENAR';
       const inputLabel = document.getElementById('player-input-label');
       const slotsContainer = document.getElementById('digit-slots-container');
-      const boomInputContainer = document.getElementById('boom-input-container');
-      const boomBoundsBanner = document.getElementById('player-boom-bounds-banner');
-      const tableThead = document.getElementById('player-history-thead');
+      const boomContainer = document.getElementById('boom-input-container');
+      const thead = document.getElementById('player-table-thead');
 
-      if (selectedGameType === 'POSISI_BENAR') {
-        inputLabel.innerHTML = `MASUKKAN <span id="player-mode-digit-text" class="text-amber-300">${selectedDigitMode} DIGIT</span> ANGKA UNIK`;
+      if (isPosisi) {
+        inputLabel.innerText = `MASUKKAN ${selectedDigitMode} DIGIT KODE UNIK`;
         slotsContainer.classList.remove('hidden');
-        boomInputContainer.classList.add('hidden');
-        boomBoundsBanner.classList.add('hidden');
+        boomContainer.classList.add('hidden');
 
-        tableThead.innerHTML = `
+        thead.innerHTML = `
           <th class="py-2 px-2">SESI</th>
           <th class="py-2 px-3 text-left">TEBAKAN</th>
           <th class="py-2 px-2 text-emerald-400">POSISI BENAR</th>
           <th class="py-2 px-2 text-cyan-400">ANGKA BENAR</th>
         `;
-
         renderDigitSlots();
       } else {
-        inputLabel.innerHTML = `TEBAK ANGKA RENTANG SEKARANG`;
+        inputLabel.innerText = `MASUKKAN ANGKA RENTANG SEKARANG`;
         slotsContainer.classList.add('hidden');
-        boomInputContainer.classList.remove('hidden');
-        boomBoundsBanner.classList.remove('hidden');
+        boomContainer.classList.remove('hidden');
 
-        tableThead.innerHTML = `
+        thead.innerHTML = `
           <th class="py-2 px-2">SESI</th>
           <th class="py-2 px-3 text-left">TEBAKAN</th>
-          <th class="py-2 px-4 text-cyan-400 text-center" colspan="2">UMPAN BALIK STATUS</th>
+          <th class="py-2 px-4 text-cyan-400 text-left" colspan="2">STATUS & UMPAN BALIK</th>
         `;
-
         renderBoomInput();
       }
+
+      renderKeypad();
     }
 
-    function checkPlayerSessionSubmittedState() {
-      db.ref(`rooms/${currentRoomPin}/guesses`).once('value', (snapshot) => {
-        const guessesObj = snapshot.val() || {};
-        const myGuesses = Object.values(guessesObj).filter(g => g.playerId === localPlayerId);
-        
-        hasSubmittedThisSession = myGuesses.some(g => g.sessionNumber === currentSessionNumber);
-        updatePlayerKeypadUI();
-      });
-    }
-
-    function updatePlayerKeypadUI() {
-      const submittedBanner = document.getElementById('session-submitted-banner');
-      const pauseBanner = document.getElementById('session-pause-banner');
-      const container = document.getElementById('keypad-container');
-      const submitBtn = document.getElementById('btn-submit-guess');
-      const numpadBtns = document.querySelectorAll('.numpad-btn');
-      const clearBtn = document.getElementById('btn-clear');
-      const deleteBtn = document.getElementById('btn-delete');
-
-      document.getElementById('banner-session-num').innerText = '#' + currentSessionNumber;
-
-      if (hasSubmittedThisSession) {
-        if (submittedBanner) submittedBanner.classList.remove('hidden');
-        if (pauseBanner) pauseBanner.classList.add('hidden');
-        if (container) container.classList.add('opacity-40', 'pointer-events-none');
-        if (submitBtn) submitBtn.disabled = true;
-        numpadBtns.forEach(b => b.disabled = true);
-        if (clearBtn) clearBtn.disabled = true;
-        if (deleteBtn) deleteBtn.disabled = true;
-      } else if (!isSessionActive) {
-        if (submittedBanner) submittedBanner.classList.add('hidden');
-        if (pauseBanner) pauseBanner.classList.remove('hidden');
-        if (container) container.classList.add('opacity-40', 'pointer-events-none');
-        if (submitBtn) submitBtn.disabled = true;
-        numpadBtns.forEach(b => b.disabled = true);
-        if (clearBtn) clearBtn.disabled = true;
-        if (deleteBtn) deleteBtn.disabled = true;
-      } else {
-        if (submittedBanner) submittedBanner.classList.add('hidden');
-        if (pauseBanner) pauseBanner.classList.add('hidden');
-        if (container) container.classList.remove('opacity-40', 'pointer-events-none');
-        if (submitBtn) submitBtn.disabled = false;
-        numpadBtns.forEach(b => b.disabled = false);
-        if (clearBtn) clearBtn.disabled = false;
-        if (deleteBtn) deleteBtn.disabled = false;
-
-        if (selectedGameType === 'POSISI_BENAR') {
-          updateNumpadDisabledState();
-        } else {
-          numpadBtns.forEach(b => {
-            b.classList.remove('opacity-30', 'cursor-not-allowed');
-            b.disabled = false;
-          });
-        }
-      }
-    }
-
-    /* =========================================================================
-       9. NUMPAD & INPUT CONTROL
-       ========================================================================= */
     function renderDigitSlots() {
       const container = document.getElementById('digit-slots-container');
       container.innerHTML = '';
-
       for (let i = 0; i < selectedDigitMode; i++) {
-        const digitVal = currentInputDigits[i] || '';
-        const slot = document.createElement('div');
-        slot.className = `w-14 h-16 sm:w-16 sm:h-20 rounded-2xl border-4 ${digitVal ? 'border-amber-400 bg-amber-500/20 text-amber-300' : 'border-slate-700 bg-slate-950/60 text-slate-500'} flex items-center justify-center text-3xl font-black fredoka transition-all shadow-inner`;
-        slot.innerText = digitVal;
-        container.appendChild(slot);
+        const val = currentInputDigits[i] !== undefined ? currentInputDigits[i] : '_';
+        const activeClass = i === currentInputDigits.length ? 'border-amber-400 text-amber-300 scale-105' : 'border-slate-800 text-slate-500';
+        container.innerHTML += `
+          <div class="w-12 h-14 rounded-xl bg-slate-950 border-2 ${activeClass} flex items-center justify-center font-mono font-black text-2xl transition">
+            ${val}
+          </div>
+        `;
       }
-
-      updateNumpadDisabledState();
     }
 
     function renderBoomInput() {
       const display = document.getElementById('boom-input-display');
-      const val = currentInputDigits.join('');
-      display.innerText = val ? val : 'Ketik Angka...';
+      display.innerText = currentInputDigits.length > 0 ? currentInputDigits.join('') : '_';
     }
 
-    function pressNumpad(num) {
-      if (!isSessionActive || hasSubmittedThisSession) return;
+    function renderKeypad() {
+      const container = document.getElementById('keypad-container');
+      const isPosisi = selectedGameType === 'POSISI_BENAR';
+
+      let numpadHTML = `
+        <div class="grid grid-cols-3 gap-2">
+          ${[1,2,3,4,5,6,7,8,9].map(num => `
+            <button onclick="pressKey('${num}')" class="keypad-btn py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-black text-lg text-white border border-slate-700">
+              ${num}
+            </button>
+          `).join('')}
+          <button onclick="clearKeypad()" class="keypad-btn py-3.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-bold text-xs border border-rose-500/30">
+            HAPUS
+          </button>
+          <button onclick="pressKey('0')" class="keypad-btn py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-black text-lg text-white border border-slate-700">
+            0
+          </button>
+          <button onclick="submitPlayerGuess()" class="keypad-btn py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-extrabold text-sm border border-emerald-400">
+            KIRIM
+          </button>
+        </div>
+      `;
+      container.innerHTML = numpadHTML;
+    }
+
+    function disableKeypad(disabled) {
+      const btns = document.querySelectorAll('.keypad-btn');
+      btns.forEach(b => {
+        b.disabled = disabled;
+        if (disabled) {
+          b.classList.add('opacity-40', 'cursor-not-allowed');
+        } else {
+          b.classList.remove('opacity-40', 'cursor-not-allowed');
+        }
+      });
+    }
+
+    function pressKey(key) {
       document.getElementById('keypad-error-msg').innerText = '';
+      playSound('tick');
 
       if (selectedGameType === 'POSISI_BENAR') {
-        if (currentInputDigits.includes(num)) {
-          playSound('tick');
-          document.getElementById('keypad-error-msg').innerText = 'Angka harus unik! (Tidak boleh ada angka kembar)';
+        if (currentInputDigits.includes(key)) {
+          document.getElementById('keypad-error-msg').innerText = 'Angka ganda tidak diperbolehkan!';
           return;
         }
-
         if (currentInputDigits.length < selectedDigitMode) {
-          playSound('click');
-          currentInputDigits.push(num);
+          currentInputDigits.push(key);
           renderDigitSlots();
         }
       } else {
-        // ANGKA BOOM MODE
         if (currentInputDigits.length < 5) {
-          playSound('click');
-          currentInputDigits.push(num);
+          currentInputDigits.push(key);
           renderBoomInput();
         }
       }
     }
 
-    function deleteNumpad() {
-      if (!isSessionActive || hasSubmittedThisSession) return;
-      if (currentInputDigits.length > 0) {
-        playSound('click');
-        currentInputDigits.pop();
-        document.getElementById('keypad-error-msg').innerText = '';
-        if (selectedGameType === 'POSISI_BENAR') renderDigitSlots();
-        else renderBoomInput();
-      }
-    }
-
-    function clearNumpad() {
-      if (!isSessionActive || hasSubmittedThisSession) return;
-      playSound('click');
+    function clearKeypad() {
+      playSound('tick');
       currentInputDigits = [];
       document.getElementById('keypad-error-msg').innerText = '';
       if (selectedGameType === 'POSISI_BENAR') renderDigitSlots();
       else renderBoomInput();
-    }
-
-    function updateNumpadDisabledState() {
-      if (!isSessionActive || hasSubmittedThisSession || selectedGameType !== 'POSISI_BENAR') return;
-      const buttons = document.querySelectorAll('.numpad-btn');
-      buttons.forEach(btn => {
-        const val = btn.innerText.trim();
-        if (currentInputDigits.includes(val)) {
-          btn.classList.add('opacity-30', 'cursor-not-allowed');
-          btn.disabled = true;
-        } else {
-          btn.classList.remove('opacity-30', 'cursor-not-allowed');
-          btn.disabled = false;
-        }
-      });
     }
 
     function submitPlayerGuess() {
-      if (!isSessionActive) {
-        alert('Sesi saat ini terjeda/habis! Tunggu Host menekan "Lanjut Sesi (15s)".');
-        return;
-      }
+      db.ref(`rooms/${currentRoomPin}`).once('value', snapshot => {
+        const room = snapshot.val();
+        if (!room) return;
 
-      if (hasSubmittedThisSession) {
-        alert('Anda sudah mengirim tebakan untuk sesi ini (Maksimal 1x per sesi). Tunggu sesi berikutnya!');
-        return;
-      }
+        const currentSess = room.sessionNumber || 1;
+        const timerVal = room.timer || 0;
 
-      if (selectedGameType === 'POSISI_BENAR') {
-        if (currentInputDigits.length < selectedDigitMode) {
-          playSound('tick');
-          document.getElementById('keypad-error-msg').innerText = `Lengkapi ${selectedDigitMode} digit angka tebakan!`;
+        if (playerSubmittedSessions[currentSess] || timerVal === 0) {
+          document.getElementById('keypad-error-msg').innerText = 'Sesi ini sudah terkunci!';
           return;
         }
 
-        const guessStr = currentInputDigits.join('');
-        const result = evaluatePosisiBenar(currentSecretCode, guessStr);
+        const secretCode = room.secretCode;
 
-        playSound('success');
-
-        db.ref(`rooms/${currentRoomPin}/guesses`).push({
-          playerId: localPlayerId,
-          nickname: localPlayerNickname,
-          guess: guessStr,
-          posisiBenar: result.posisiBenar,
-          angkaBenar: result.angkaBenar,
-          sessionNumber: currentSessionNumber,
-          timestamp: firebase.database.ServerValue.TIMESTAMP
-        });
-
-      } else {
-        // ANGKA BOOM SUBMISSION (Private immediate feedback to player)
-        if (currentInputDigits.length === 0) {
-          playSound('tick');
-          document.getElementById('keypad-error-msg').innerText = 'Masukkan angka tebakan Anda!';
-          return;
-        }
-
-        const guessNum = parseInt(currentInputDigits.join(''), 10);
-        const secretVal = parseInt(currentSecretCode, 10);
-
-        if (isNaN(guessNum)) return;
-
-        let boomStatus = 'NEUTRAL';
-        const currentLower = parseInt(document.getElementById('player-boom-lower').innerText, 10) || 0;
-        const currentUpper = parseInt(document.getElementById('player-boom-upper').innerText, 10) || selectedBoomRange;
-
-        if (guessNum === secretVal) {
-          boomStatus = 'BOOM';
-          playSound('boom');
-        } else if (guessNum < secretVal && guessNum > currentLower) {
-          boomStatus = 'BATAS_BAWAH';
-          playSound('success');
-        } else if (guessNum > secretVal && guessNum < currentUpper) {
-          boomStatus = 'BATAS_ATAS';
-          playSound('success');
-        } else {
-          playSound('tick');
-        }
-
-        db.ref(`rooms/${currentRoomPin}/guesses`).push({
-          playerId: localPlayerId,
-          nickname: localPlayerNickname,
-          guess: guessNum.toString(),
-          boomStatus: boomStatus,
-          sessionNumber: currentSessionNumber,
-          timestamp: firebase.database.ServerValue.TIMESTAMP
-        });
-      }
-
-      // Clear input & Lock Keypad for this session
-      currentInputDigits = [];
-      hasSubmittedThisSession = true;
-      if (selectedGameType === 'POSISI_BENAR') renderDigitSlots();
-      else renderBoomInput();
-
-      updatePlayerKeypadUI();
-      document.getElementById('keypad-error-msg').innerText = '';
-    }
-
-    /* =========================================================================
-       10. PLAYER GUESS HISTORY TABLE (Instant Private Feedback)
-       ========================================================================= */
-    function listenMyGuessesHistory() {
-      db.ref(`rooms/${currentRoomPin}/guesses`).on('value', (snapshot) => {
-        const guessesObj = snapshot.val() || {};
-        const myGuesses = Object.values(guessesObj).filter(g => g.playerId === localPlayerId);
-
-        myGuesses.sort((a, b) => a.timestamp - b.timestamp);
-
-        document.getElementById('my-guess-count').innerText = myGuesses.length + ' kali';
-        const tbody = document.getElementById('player-history-tbody');
-
-        if (myGuesses.length === 0) {
-          tbody.innerHTML = `
-            <tr>
-              <td colspan="4" class="text-slate-400 text-xs py-4 italic font-normal">Belum ada tebakan dikirim.</td>
-            </tr>`;
-          return;
-        }
-
-        const reversedGuesses = [...myGuesses].reverse();
-
-        tbody.innerHTML = reversedGuesses.map((g) => {
-          if (selectedGameType === 'POSISI_BENAR') {
-            return `
-              <tr class="border-b border-white/5 hover:bg-white/5 transition animate-slide-in">
-                <td class="py-2 px-2 text-cyan-400 font-bold">#${g.sessionNumber || 1}</td>
-                <td class="py-2 px-3 text-amber-300 text-sm font-black tracking-widest fredoka text-left">${g.guess}</td>
-                <td class="py-2 px-2">
-                  <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold">
-                    ${g.posisiBenar}
-                  </span>
-                </td>
-                <td class="py-2 px-2">
-                  <span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[11px] font-bold">
-                    ${g.angkaBenar}
-                  </span>
-                </td>
-              </tr>
-            `;
-          } else {
-            let statusBadge = '';
-            if (g.boomStatus === 'BOOM') {
-              statusBadge = `<span class="px-2 py-0.5 rounded-full bg-rose-500/30 text-rose-300 border border-rose-500/50 font-bold text-xs">💣 BOOM!</span>`;
-            } else if (g.boomStatus === 'BATAS_BAWAH') {
-              statusBadge = `<span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs">▲ Batas Bawah Baru</span>`;
-            } else if (g.boomStatus === 'BATAS_ATAS') {
-              statusBadge = `<span class="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 text-xs">▼ Batas Atas Baru</span>`;
-            } else {
-              statusBadge = `<span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-xs">Di Luar Batas / Sama</span>`;
-            }
-
-            return `
-              <tr class="border-b border-white/5 hover:bg-white/5 transition animate-slide-in">
-                <td class="py-2 px-2 text-cyan-400 font-bold">#${g.sessionNumber || 1}</td>
-                <td class="py-2 px-3 text-amber-300 text-sm font-black tracking-widest fredoka text-left">${g.guess}</td>
-                <td class="py-2 px-4 text-center" colspan="2">
-                  ${statusBadge}
-                </td>
-              </tr>
-            `;
+        if (selectedGameType === 'POSISI_BENAR') {
+          if (currentInputDigits.length !== selectedDigitMode) {
+            document.getElementById('keypad-error-msg').innerText = `Masukkan ${selectedDigitMode} digit lengkap!`;
+            return;
           }
-        }).join('');
 
-        hasSubmittedThisSession = myGuesses.some(g => g.sessionNumber === currentSessionNumber);
-        updatePlayerKeypadUI();
+          const guessStr = currentInputDigits.join('');
+          let posisiBenar = 0;
+          let angkaBenar = 0;
+
+          const secretArr = secretCode.split('');
+          const guessArr = guessStr.split('');
+
+          for (let i = 0; i < selectedDigitMode; i++) {
+            if (guessArr[i] === secretArr[i]) {
+              posisiBenar++;
+            }
+            if (secretArr.includes(guessArr[i])) {
+              angkaBenar++;
+            }
+          }
+
+          const isWin = (posisiBenar === selectedDigitMode);
+
+          db.ref(`rooms/${currentRoomPin}/guesses`).push({
+            playerId: localPlayerId,
+            nickname: localPlayerNickname,
+            guess: guessStr,
+            posisiBenar: posisiBenar,
+            angkaBenar: angkaBenar,
+            isWin: isWin,
+            sessionNumber: currentSess,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+          }).then(() => {
+            playerSubmittedSessions[currentSess] = true;
+            clearKeypad();
+            playSound('success');
+          });
+
+        } else {
+          // ANGKA BOOM SUBMISSION
+          if (currentInputDigits.length === 0) {
+            document.getElementById('keypad-error-msg').innerText = 'Masukkan angka tebakan Anda!';
+            return;
+          }
+
+          const guessNum = parseInt(currentInputDigits.join(''), 10);
+          const secretVal = parseInt(secretCode, 10);
+
+          if (isNaN(guessNum)) return;
+
+          let boomStatus = 'DI_LUAR_RENTANG';
+          let boomFeedback = '';
+          const currentLower = room.lowerBound || 0;
+          const currentUpper = room.upperBound || selectedBoomRange;
+
+          if (guessNum === secretVal) {
+            boomStatus = 'BOOM';
+            boomFeedback = 'TEPAT! Anda menembak Angka Bom!';
+            playSound('boom');
+          } else if (guessNum < secretVal && guessNum > currentLower) {
+            boomStatus = 'BATAS_BAWAH';
+            boomFeedback = `Terlalu KECIL! Batas Bawah bergeser naik ke ${guessNum}.`;
+            playSound('success');
+          } else if (guessNum > secretVal && guessNum < currentUpper) {
+            boomStatus = 'BATAS_ATAS';
+            boomFeedback = `Terlalu BESAR! Batas Atas bergeser turun ke ${guessNum}.`;
+            playSound('success');
+          } else {
+            boomStatus = 'DI_LUAR_RENTANG';
+            boomFeedback = `Di luar rentang aktif [${currentLower} - ${currentUpper}].`;
+            playSound('tick');
+          }
+
+          db.ref(`rooms/${currentRoomPin}/guesses`).push({
+            playerId: localPlayerId,
+            nickname: localPlayerNickname,
+            guess: guessNum.toString(),
+            boomStatus: boomStatus,
+            boomFeedback: boomFeedback,
+            isWin: (boomStatus === 'BOOM'),
+            sessionNumber: currentSess,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+          }).then(() => {
+            playerSubmittedSessions[currentSess] = true;
+            clearKeypad();
+          });
+        }
       });
     }
 
-    /* =========================================================================
-       11. WINNER CELEBRATION
-       ========================================================================= */
-    function triggerWinnerCelebration(winnerNickname, secretCode) {
-      playSound('win');
-      showScreen('screen-finished');
+    function renderPlayerHistoryTable(allGuesses) {
+      const myGuesses = Object.values(allGuesses)
+        .filter(g => g.playerId === localPlayerId)
+        .sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-      const titleEl = document.getElementById('finished-title-text');
-      const badgeIcon = document.getElementById('finished-icon-badge');
+      const tbody = document.getElementById('player-table-tbody');
+      if (myGuesses.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-slate-500 italic">Belum ada tebakan.</td></tr>`;
+        return;
+      }
 
       if (selectedGameType === 'POSISI_BENAR') {
-        titleEl.innerText = "PEMENANG KODE RAHASIA!";
-        badgeIcon.innerText = "🏆";
+        tbody.innerHTML = myGuesses.map(g => `
+          <tr class="border-b border-slate-800/40">
+            <td class="py-2 px-2 text-cyan-400 font-bold">#${g.sessionNumber || 1}</td>
+            <td class="py-2 px-3 text-amber-300 font-black tracking-widest text-left">${g.guess}</td>
+            <td class="py-2 px-2 text-emerald-400 font-black">${g.posisiBenar}</td>
+            <td class="py-2 px-2 text-cyan-400 font-black">${g.angkaBenar}</td>
+          </tr>
+        `).join('');
       } else {
-        titleEl.innerText = "KENA ANGKA BOOM! 💣";
-        badgeIcon.innerText = "💥";
+        tbody.innerHTML = myGuesses.map(g => {
+          let badge = '';
+          if (g.boomStatus === 'BOOM') badge = `<span class="px-2 py-0.5 rounded bg-rose-500/30 text-rose-300 font-bold">💣 BOOM</span>`;
+          else if (g.boomStatus === 'BATAS_BAWAH') badge = `<span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold">🔼 Batas Bawah</span>`;
+          else if (g.boomStatus === 'BATAS_ATAS') badge = `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">🔽 Batas Atas</span>`;
+          else badge = `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-bold">⚠️ Di Luar</span>`;
+
+          return `
+            <tr class="border-b border-slate-800/40">
+              <td class="py-2 px-2 text-cyan-400 font-bold">#${g.sessionNumber || 1}</td>
+              <td class="py-2 px-3 text-amber-300 font-black tracking-widest text-left">${g.guess}</td>
+              <td class="py-2 px-3 text-left" colspan="2">
+                <div class="flex items-center gap-1.5">
+                  ${badge}
+                  <span class="text-[10px] text-slate-400">${escapeHtml(g.boomFeedback || '')}</span>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
       }
-
-      document.getElementById('winner-name-display').innerText = winnerNickname;
-      
-      const codeStr = (secretCode || currentSecretCode || currentBoomSecret).toString();
-      document.getElementById('revealed-secret-code').innerText = codeStr.split('').join(' ');
-
-      const hostActions = document.getElementById('finished-host-actions');
-      const playerActions = document.getElementById('finished-player-actions');
-
-      if (isHost) {
-        if (hostActions) hostActions.classList.remove('hidden');
-        if (playerActions) playerActions.classList.add('hidden');
-      } else {
-        if (hostActions) hostActions.classList.add('hidden');
-        if (playerActions) playerActions.classList.remove('hidden');
-      }
-
-      try {
-        confetti({
-          particleCount: 120,
-          spread: 80,
-          origin: { y: 0.6 }
-        });
-      } catch (e) {}
     }
 
-    /* =========================================================================
-       12. UTILITY & INITIALIZATION
-       ========================================================================= */
+    // Utility: XSS Escaper
     function escapeHtml(str) {
-      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const pinParam = urlParams.get('pin');
-      if (pinParam) {
-        showScreen('screen-player-join');
-        document.getElementById('input-pin').value = pinParam;
-      }
-    });
+    // Initialize View on Load
+    window.onload = function() {
+      goToLandingScreen();
+    };
   </script>
 </body>
 </html>
