@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Bulls & Cows Live - Posisi & Angka</title>
+  <title>Tebak Angka Live - Game Platform (Kahoot Style)</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -111,9 +111,9 @@
       </div>
       <div>
         <h1 class="text-xl sm:text-2xl font-bold fredoka tracking-wide bg-gradient-to-r from-amber-300 via-pink-400 to-cyan-300 bg-clip-text text-transparent">
-          POSISI & ANGKA
+          GAME PLATFORM INTERAKTIF
         </h1>
-        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider hidden sm:block">Kahoot-Style Multiplayer Game</p>
+        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider hidden sm:block">Posisi Benar & Angka Boom (Kahoot Style)</p>
       </div>
     </div>
 
@@ -143,13 +143,13 @@
     <section id="screen-role-select" class="w-full max-w-3xl flex flex-col items-center justify-center py-6 animate-slide-in">
       <div class="text-center mb-8">
         <span class="px-4 py-1.5 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs sm:text-sm font-bold uppercase tracking-widest mb-3 inline-block">
-          Game Edukasi & Ice Breaking
+          Game Edukasi & Ice Breaking LKMM-TD
         </span>
         <h2 class="text-3xl sm:text-5xl font-black fredoka tracking-tight text-white mb-2">
           PILIH PERAN ANDA
         </h2>
         <p class="text-slate-300 text-sm sm:text-base max-w-md mx-auto">
-          Tebak kombinasi angka rahasia secara cepat dan tepat bersama peserta lain!
+          Pilih untuk mengendalikan game sebagai Host Proyektor atau ikut menebak sebagai Peserta!
         </p>
       </div>
 
@@ -163,7 +163,7 @@
           <div>
             <h3 class="text-2xl font-bold fredoka text-purple-200 mb-2">Layar Host / Proyektor</h3>
             <p class="text-xs sm:text-sm text-purple-300/80 mb-6">
-              Buat ruangan baru, tampilkan PIN & QR Code, kendalikan timer 15 detik, dan pantau papan skor live.
+              Login panitia, pilih mode (Posisi Benar / Angka Boom), tampilkan PIN & QR, serta kelola timer sesi live.
             </p>
           </div>
           <button class="w-full py-3.5 px-6 rounded-2xl bg-purple-500 hover:bg-purple-400 font-bold fredoka text-lg shadow-lg border-b-4 border-purple-700 active:border-b-0 text-white">
@@ -180,7 +180,7 @@
           <div>
             <h3 class="text-2xl font-bold fredoka text-cyan-200 mb-2">Layar Peserta / HP</h3>
             <p class="text-xs sm:text-sm text-cyan-300/80 mb-6">
-              Masukkan Game PIN, kirim angka tebakan unik (1x per sesi), dan dapatkan hasil Posisi & Angka Benar.
+              Masukkan Game PIN, kirim angka tebakan (1x per sesi), dan dapatkan hasil feedback langsung.
             </p>
           </div>
           <button class="w-full py-3.5 px-6 rounded-2xl bg-cyan-500 hover:bg-cyan-400 font-bold fredoka text-lg shadow-lg border-b-4 border-cyan-700 active:border-b-0 text-white">
@@ -223,26 +223,56 @@
       </div>
     </section>
 
-    <!-- ==================== SCREEN 1: HOST SETUP & LOBBY ==================== -->
+    <!-- ==================== SCREEN 1: HOST GAME SELECTION & LOBBY ==================== -->
     <section id="screen-host-lobby" class="w-full max-w-4xl flex flex-col items-center justify-center hidden animate-slide-in">
       
-      <!-- MODE SELECTOR (PRE-GAME) -->
-      <div id="host-setup-card" class="w-full max-w-lg bg-slate-800/90 border-4 border-indigo-500/40 rounded-3xl p-6 sm:p-8 text-center shadow-2xl backdrop-blur-xl mb-6">
-        <h3 class="text-2xl font-bold fredoka text-amber-300 mb-2">PENGATURAN GAME BARU</h3>
-        <p class="text-xs sm:text-sm text-slate-300 mb-6">Pilih variasi mode jumlah digit angka rahasia:</p>
+      <!-- GAME TYPE SELECTOR (POST-LOGIN SETUP) -->
+      <div id="host-setup-card" class="w-full max-w-xl bg-slate-800/90 border-4 border-indigo-500/40 rounded-3xl p-6 sm:p-8 text-center shadow-2xl backdrop-blur-xl mb-6">
+        <h3 class="text-2xl font-bold fredoka text-amber-300 mb-1">PILIH MODE PERMAINAN HOST</h3>
+        <p class="text-xs sm:text-sm text-slate-300 mb-6">Pilih jenis game yang ingin dimainkan bersama peserta:</p>
 
-        <div class="grid grid-cols-2 gap-4 mb-6">
-          <button id="btn-mode-3" onclick="selectDigitMode(3)" class="py-4 px-4 rounded-2xl border-4 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 flex flex-col items-center gap-1 transition">
-            <span class="text-3xl">3️⃣</span>
-            <span class="text-lg">3 DIGIT</span>
-            <span class="text-[10px] opacity-80">3 Angka Unik (Default)</span>
+        <!-- GAME TYPE TABS -->
+        <div class="grid grid-cols-2 gap-3 mb-6">
+          <button id="tab-game-posisi" onclick="selectGameType('POSISI_BENAR')" class="py-3 px-4 rounded-2xl border-4 border-purple-500 bg-purple-600/30 font-bold fredoka text-purple-200 flex flex-col items-center gap-1 transition">
+            <span class="text-3xl">🎯</span>
+            <span class="text-base sm:text-lg">POSISI BENAR</span>
+            <span class="text-[10px] opacity-80">Bulls & Cows Logika</span>
           </button>
 
-          <button id="btn-mode-4" onclick="selectDigitMode(4)" class="py-4 px-4 rounded-2xl border-4 border-slate-600 bg-slate-700/40 font-bold fredoka text-slate-400 flex flex-col items-center gap-1 transition">
-            <span class="text-3xl">4️⃣</span>
-            <span class="text-lg">4 DIGIT</span>
-            <span class="text-[10px] opacity-80">4 Angka Unik</span>
+          <button id="tab-game-boom" onclick="selectGameType('ANGKA_BOOM')" class="py-3 px-4 rounded-2xl border-4 border-slate-700 bg-slate-800/50 font-bold fredoka text-slate-400 flex flex-col items-center gap-1 transition">
+            <span class="text-3xl">💣</span>
+            <span class="text-base sm:text-lg">ANGKA BOOM</span>
+            <span class="text-[10px] opacity-80">Jepitan Rentang Batas</span>
           </button>
+        </div>
+
+        <!-- SUB-OPTIONS FOR POSISI BENAR -->
+        <div id="options-posisi-benar" class="space-y-3 mb-6 p-4 bg-slate-900/60 rounded-2xl border border-white/5">
+          <label class="block text-xs font-bold text-slate-300 uppercase">JUMLAH DIGIT ANGKA RAHASIA:</label>
+          <div class="grid grid-cols-2 gap-3">
+            <button id="btn-mode-3" onclick="selectDigitMode(3)" class="py-3 px-3 rounded-xl border-2 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 text-sm">
+              3 Digit (Default)
+            </button>
+            <button id="btn-mode-4" onclick="selectDigitMode(4)" class="py-3 px-3 rounded-xl border-2 border-slate-600 bg-slate-800 font-bold fredoka text-slate-400 text-sm">
+              4 Digit
+            </button>
+          </div>
+        </div>
+
+        <!-- SUB-OPTIONS FOR ANGKA BOOM -->
+        <div id="options-angka-boom" class="space-y-3 mb-6 p-4 bg-slate-900/60 rounded-2xl border border-white/5 hidden">
+          <label class="block text-xs font-bold text-slate-300 uppercase">RENTANG ANGKA BOOM:</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button id="btn-boom-100" onclick="selectBoomRange(100)" class="py-3 px-2 rounded-xl border-2 border-slate-600 bg-slate-800 font-bold fredoka text-slate-400 text-xs">
+              0 - 100
+            </button>
+            <button id="btn-boom-500" onclick="selectBoomRange(500)" class="py-3 px-2 rounded-xl border-2 border-slate-600 bg-slate-800 font-bold fredoka text-slate-400 text-xs">
+              0 - 500
+            </button>
+            <button id="btn-boom-1000" onclick="selectBoomRange(1000)" class="py-3 px-2 rounded-xl border-2 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 text-xs">
+              0 - 1000 (Default)
+            </button>
+          </div>
         </div>
 
         <button onclick="createHostRoom()" class="btn-kahoot w-full py-4 px-6 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 font-bold fredoka text-xl rounded-2xl shadow-xl border-b-4 border-emerald-800 text-white">
@@ -262,7 +292,7 @@
                 ------
               </div>
               <p class="text-xs sm:text-sm text-slate-300">
-                Mode: <span id="display-digit-mode-badge" class="font-bold text-cyan-400">4 Digit</span>
+                Mode Game: <span id="display-game-type-badge" class="font-bold text-cyan-400">Posisi Benar (3 Digit)</span>
               </p>
             </div>
 
@@ -303,14 +333,14 @@
     <section id="screen-host-dashboard" class="w-full max-w-5xl flex flex-col items-center hidden animate-slide-in">
       
       <!-- TOP CONTROL & TIMER BAR -->
-      <div class="w-full bg-slate-900/90 border-2 border-indigo-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl mb-6 backdrop-blur-xl flex flex-wrap justify-between items-center gap-4">
+      <div class="w-full bg-slate-900/90 border-2 border-indigo-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl mb-4 backdrop-blur-xl flex flex-wrap justify-between items-center gap-4">
         
         <div>
           <div class="flex items-center gap-2">
             <span class="text-xs text-slate-400 font-bold uppercase">GAME PIN: <strong id="dash-pin" class="text-amber-400 text-base">------</strong></span>
             <span class="text-xs text-slate-400 font-bold uppercase">| SESI KE: <strong id="dash-session-num" class="text-cyan-400 text-base">#1</strong></span>
           </div>
-          <h3 class="text-xl sm:text-2xl font-black fredoka text-white">SESI MONITORING LIVE</h3>
+          <h3 id="dash-game-title" class="text-xl sm:text-2xl font-black fredoka text-white">SESI MONITORING LIVE</h3>
         </div>
 
         <!-- TIMER DISPLAY & CONTROLS -->
@@ -330,6 +360,24 @@
         </div>
       </div>
 
+      <!-- ANGKA BOOM BOUNDS BANNER (ONLY DISPLAYED IN ANGKA BOOM MODE) -->
+      <div id="host-boom-bounds-card" class="w-full bg-gradient-to-r from-purple-900/90 via-indigo-900/90 to-slate-900/90 border-4 border-rose-500/50 rounded-3xl p-5 mb-4 shadow-2xl text-center backdrop-blur-xl hidden">
+        <span class="text-xs font-bold text-rose-300 uppercase tracking-widest block mb-1">
+          💣 RENTANG ANGKA BOOM SAAT INI
+        </span>
+        <div class="flex justify-center items-center gap-4 sm:gap-8 my-2">
+          <div class="bg-slate-950/80 px-6 py-3 rounded-2xl border-2 border-cyan-400">
+            <span class="text-[10px] text-slate-400 font-bold uppercase block">BATAS BAWAH</span>
+            <span id="host-boom-lower" class="text-3xl sm:text-5xl font-black fredoka text-cyan-300">0</span>
+          </div>
+          <span class="text-2xl sm:text-4xl font-black fredoka text-amber-400">&lt; ??? &lt;</span>
+          <div class="bg-slate-950/80 px-6 py-3 rounded-2xl border-2 border-rose-400">
+            <span class="text-[10px] text-slate-400 font-bold uppercase block">BATAS ATAS</span>
+            <span id="host-boom-upper" class="text-3xl sm:text-5xl font-black fredoka text-rose-300">1000</span>
+          </div>
+        </div>
+      </div>
+
       <!-- LIVE FEED TABLE (MAX 10 FIFO ROWS) -->
       <div class="w-full bg-slate-900/90 border-4 border-purple-500/30 rounded-3xl p-5 sm:p-7 shadow-2xl backdrop-blur-xl">
         <div class="flex justify-between items-center mb-4 pb-2 border-b border-white/10">
@@ -342,12 +390,12 @@
           </span>
         </div>
 
-        <!-- TABLE HEADER (HIDE POSISI BENAR FOR HOST PROYEKTOR FEED) -->
-        <div class="grid grid-cols-12 gap-2 px-4 py-2 bg-slate-950/60 rounded-xl font-bold text-xs text-slate-400 uppercase tracking-wider mb-2 text-center">
+        <!-- TABLE HEADER -->
+        <div id="host-feed-header" class="grid grid-cols-12 gap-2 px-4 py-2 bg-slate-950/60 rounded-xl font-bold text-xs text-slate-400 uppercase tracking-wider mb-2 text-center">
           <div class="col-span-2">SESI</div>
           <div class="col-span-4 text-left">NICKNAME</div>
           <div class="col-span-3">TEBAKAN</div>
-          <div class="col-span-3 text-cyan-400">ANGKA BENAR</div>
+          <div id="feed-col-feedback" class="col-span-3 text-cyan-400">ANGKA BENAR</div>
         </div>
 
         <!-- FIFO CONTAINER FOR 10 ROWS -->
@@ -450,18 +498,35 @@
         <p class="text-[11px] text-amber-100 font-semibold">Menunggu Host menekan "Lanjut Sesi (15s)"...</p>
       </div>
 
-      <!-- INPUT DISPLAY SLOTS -->
+      <!-- ANGKA BOOM PLAYER BOUNDS BANNER -->
+      <div id="player-boom-bounds-banner" class="w-full bg-slate-900/90 border-2 border-rose-500/40 rounded-2xl p-3 mb-3 text-center shadow-lg backdrop-blur-md hidden">
+        <span class="text-[10px] text-slate-400 font-bold uppercase block mb-1">BATAS RENTANG AKTIF SAAT INI:</span>
+        <div class="flex justify-center items-center gap-4">
+          <span id="player-boom-lower" class="text-xl font-black fredoka text-cyan-300">0</span>
+          <span class="text-sm font-bold text-amber-400">&lt; ANGKA RAHASIA &lt;</span>
+          <span id="player-boom-upper" class="text-xl font-black fredoka text-rose-300">1000</span>
+        </div>
+      </div>
+
+      <!-- INPUT DISPLAY SLOTS / VALUE CONTAINER -->
       <div class="w-full bg-slate-900/90 border-4 border-purple-500/40 rounded-3xl p-4 shadow-2xl backdrop-blur-xl mb-3 text-center">
-        <span class="text-xs font-bold text-slate-300 block mb-2 uppercase tracking-wider">
-          MASUKKAN <span id="player-mode-digit-text" class="text-amber-300">4 DIGIT</span> ANGKA UNIK
+        <span id="player-input-label" class="text-xs font-bold text-slate-300 block mb-2 uppercase tracking-wider">
+          MASUKKAN <span id="player-mode-digit-text" class="text-amber-300">3 DIGIT</span> ANGKA UNIK
         </span>
 
-        <!-- SLOTS CONTAINER -->
+        <!-- SLOTS CONTAINER (FOR POSISI BENAR) -->
         <div id="digit-slots-container" class="flex justify-center gap-3 mb-1">
           <!-- Dynamically Generated Slots -->
         </div>
 
-        <p id="keypad-error-msg" class="text-xs text-rose-400 font-bold h-4"></p>
+        <!-- SINGLE INPUT CONTAINER (FOR ANGKA BOOM) -->
+        <div id="boom-input-container" class="hidden">
+          <div id="boom-input-display" class="w-full py-3 px-4 bg-slate-950/80 border-2 border-amber-400/50 rounded-2xl text-3xl font-black fredoka text-amber-300 text-center min-h-[60px] flex items-center justify-center tracking-wider">
+            <!-- Dynamically Displayed Number -->
+          </div>
+        </div>
+
+        <p id="keypad-error-msg" class="text-xs text-rose-400 font-bold h-4 mt-1"></p>
       </div>
 
       <!-- NUMPAD KEYPAD CONTAINER -->
@@ -499,7 +564,7 @@
         <div class="w-full overflow-hidden rounded-2xl border border-white/10">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="bg-slate-950/80 text-[10px] font-bold text-slate-400 uppercase text-center border-b border-white/10">
+              <tr id="player-history-thead" class="bg-slate-950/80 text-[10px] font-bold text-slate-400 uppercase text-center border-b border-white/10">
                 <th class="py-2 px-2">SESI</th>
                 <th class="py-2 px-3 text-left">TEBAKAN</th>
                 <th class="py-2 px-2 text-emerald-400">POSISI BENAR</th>
@@ -522,7 +587,7 @@
     <section id="screen-finished" class="w-full max-w-2xl flex flex-col items-center justify-center hidden animate-slide-in">
       <div class="w-full bg-slate-900/95 border-4 border-amber-400 rounded-3xl p-8 text-center shadow-2xl backdrop-blur-xl relative overflow-hidden">
         
-        <div class="w-24 h-24 rounded-full bg-amber-400/20 border-4 border-amber-400 flex items-center justify-center text-5xl mx-auto mb-4 animate-bounce">
+        <div id="finished-icon-badge" class="w-24 h-24 rounded-full bg-amber-400/20 border-4 border-amber-400 flex items-center justify-center text-5xl mx-auto mb-4 animate-bounce">
           🏆
         </div>
 
@@ -530,7 +595,7 @@
           GAME SELESAI
         </span>
 
-        <h2 class="text-3xl sm:text-5xl font-black fredoka text-white mb-2">
+        <h2 id="finished-title-text" class="text-3xl sm:text-5xl font-black fredoka text-white mb-2">
           PEMENANG KODE RAHASIA!
         </h2>
 
@@ -540,7 +605,7 @@
             BUDI
           </h3>
 
-          <p class="text-xs text-slate-300 uppercase font-bold mb-1">KODE RAHASIA TERBONGKAR</p>
+          <p class="text-xs text-slate-300 uppercase font-bold mb-1">KODE / ANGKA RAHASIA</p>
           <div id="revealed-secret-code" class="text-4xl sm:text-6xl font-black fredoka tracking-widest text-emerald-400">
             5 8 1 4
           </div>
@@ -571,7 +636,7 @@
 
   <!-- FOOTER -->
   <footer class="w-full py-3 px-4 text-center text-xs text-slate-400 border-t border-white/5 bg-slate-950/60 backdrop-blur-md">
-    LKMM TD POLTERA &copy; 2026 Bulls & Cows Live - Game Edukasi Interaktif Berbasis Firebase Realtime
+    LKMM TD POLTERA &copy; 2026 Game Platform - Multi-Mode Kahoot Style Web App
   </footer>
 
 
@@ -602,12 +667,19 @@
        2. GLOBAL STATE & VARIABLES
        ========================================================================= */
     let isSoundOn = true;
-    let selectedDigitMode = 3; // Default set to 3 digits
+    let selectedGameType = 'POSISI_BENAR'; // 'POSISI_BENAR' or 'ANGKA_BOOM'
+    let selectedDigitMode = 3;            // 3 or 4 for Posisi Benar
+    let selectedBoomRange = 1000;         // 100, 500, or 1000 for Angka Boom
+
     let currentRoomPin = null;
     let isHost = false;
     let localPlayerId = 'player_' + Math.random().toString(36).substr(2, 9);
     let localPlayerNickname = '';
     let currentSecretCode = '';
+    let currentBoomSecret = 0;
+    let currentBoomLower = 0;
+    let currentBoomUpper = 1000;
+
     let activeTimerInterval = null;
     let currentInputDigits = [];
     let currentSessionNumber = 1;
@@ -666,6 +738,14 @@
           gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
           osc.start(now);
           osc.stop(now + 0.25);
+        } else if (type === 'boom') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(150, now);
+          osc.frequency.exponentialRampToValueAtTime(40, now + 0.4);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+          osc.start(now);
+          osc.stop(now + 0.4);
         } else if (type === 'win') {
           osc.type = 'triangle';
           osc.frequency.setValueAtTime(523.25, now);
@@ -721,7 +801,7 @@
     }
 
     /* =========================================================================
-       5. GAME LOGIC: DIGIT GENERATION & EVALUATION
+       5. GAME LOGIC EVALUATORS
        ========================================================================= */
     function generateSecretCode(digitsCount) {
       const nums = ['0','1','2','3','4','5','6','7','8','9'];
@@ -732,7 +812,7 @@
       return nums.slice(0, digitsCount).join('');
     }
 
-    function evaluateGuess(secretCode, guess) {
+    function evaluatePosisiBenar(secretCode, guess) {
       let posisiBenar = 0;
       let angkaBenar = 0;
 
@@ -747,7 +827,6 @@
           angkaBenar++;
         }
       }
-
       return { posisiBenar, angkaBenar };
     }
 
@@ -763,7 +842,8 @@
       }
 
       isHost = true;
-      selectDigitMode(3); // Ensure default 3-digit selection
+      selectGameType('POSISI_BENAR');
+      selectDigitMode(3);
       showScreen('screen-host-lobby');
       document.getElementById('host-setup-card').classList.remove('hidden');
       document.getElementById('host-active-lobby').classList.add('hidden');
@@ -780,9 +860,10 @@
       errorEl.innerText = 'Memverifikasi akun panitia...';
 
       auth.signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
+        .then(() => {
           errorEl.innerText = '';
           isHost = true;
+          selectGameType('POSISI_BENAR');
           selectDigitMode(3);
           showScreen('screen-host-lobby');
           document.getElementById('host-setup-card').classList.remove('hidden');
@@ -809,6 +890,27 @@
       }
     }
 
+    function selectGameType(type) {
+      playSound('click');
+      selectedGameType = type;
+      const tabPosisi = document.getElementById('tab-game-posisi');
+      const tabBoom = document.getElementById('tab-game-boom');
+      const optsPosisi = document.getElementById('options-posisi-benar');
+      const optsBoom = document.getElementById('options-angka-boom');
+
+      if (type === 'POSISI_BENAR') {
+        tabPosisi.className = 'py-3 px-4 rounded-2xl border-4 border-purple-500 bg-purple-600/30 font-bold fredoka text-purple-200 flex flex-col items-center gap-1 transition';
+        tabBoom.className = 'py-3 px-4 rounded-2xl border-4 border-slate-700 bg-slate-800/50 font-bold fredoka text-slate-400 flex flex-col items-center gap-1 transition';
+        optsPosisi.classList.remove('hidden');
+        optsBoom.classList.add('hidden');
+      } else {
+        tabBoom.className = 'py-3 px-4 rounded-2xl border-4 border-rose-500 bg-rose-600/30 font-bold fredoka text-rose-200 flex flex-col items-center gap-1 transition';
+        tabPosisi.className = 'py-3 px-4 rounded-2xl border-4 border-slate-700 bg-slate-800/50 font-bold fredoka text-slate-400 flex flex-col items-center gap-1 transition';
+        optsBoom.classList.remove('hidden');
+        optsPosisi.classList.add('hidden');
+      }
+    }
+
     function selectDigitMode(mode) {
       playSound('click');
       selectedDigitMode = mode;
@@ -816,35 +918,74 @@
       const btn4 = document.getElementById('btn-mode-4');
 
       if (mode === 3) {
-        btn3.className = 'py-4 px-4 rounded-2xl border-4 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 flex flex-col items-center gap-1 transition';
-        btn4.className = 'py-4 px-4 rounded-2xl border-4 border-slate-600 bg-slate-700/40 font-bold fredoka text-slate-400 flex flex-col items-center gap-1 transition';
+        btn3.className = 'py-3 px-3 rounded-xl border-2 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 text-sm';
+        btn4.className = 'py-3 px-3 rounded-xl border-2 border-slate-600 bg-slate-800 font-bold fredoka text-slate-400 text-sm';
       } else {
-        btn4.className = 'py-4 px-4 rounded-2xl border-4 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 flex flex-col items-center gap-1 transition';
-        btn3.className = 'py-4 px-4 rounded-2xl border-4 border-slate-600 bg-slate-700/40 font-bold fredoka text-slate-400 flex flex-col items-center gap-1 transition';
+        btn4.className = 'py-3 px-3 rounded-xl border-2 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 text-sm';
+        btn3.className = 'py-3 px-3 rounded-xl border-2 border-slate-600 bg-slate-800 font-bold fredoka text-slate-400 text-sm';
+      }
+    }
+
+    function selectBoomRange(range) {
+      playSound('click');
+      selectedBoomRange = range;
+      const b100 = document.getElementById('btn-boom-100');
+      const b500 = document.getElementById('btn-boom-500');
+      const b1000 = document.getElementById('btn-boom-1000');
+
+      [b100, b500, b1000].forEach(btn => {
+        btn.className = 'py-3 px-2 rounded-xl border-2 border-slate-600 bg-slate-800 font-bold fredoka text-slate-400 text-xs';
+      });
+
+      if (range === 100) {
+        b100.className = 'py-3 px-2 rounded-xl border-2 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 text-xs';
+      } else if (range === 500) {
+        b500.className = 'py-3 px-2 rounded-xl border-2 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 text-xs';
+      } else {
+        b1000.className = 'py-3 px-2 rounded-xl border-2 border-amber-400 bg-amber-500/20 font-bold fredoka text-amber-300 text-xs';
       }
     }
 
     function createHostRoom() {
       playSound('click');
       currentRoomPin = Math.floor(100000 + Math.random() * 900000).toString();
-      currentSecretCode = generateSecretCode(selectedDigitMode);
-
-      roomRef = db.ref('rooms/' + currentRoomPin);
-      roomRef.set({
+      
+      let roomPayload = {
         pin: currentRoomPin,
-        digitMode: selectedDigitMode,
-        secretCode: currentSecretCode,
+        gameType: selectedGameType,
         status: 'LOBBY',
         timer: 15,
         sessionActive: false,
         sessionNumber: 1,
         createdAt: firebase.database.ServerValue.TIMESTAMP
-      });
+      };
+
+      if (selectedGameType === 'POSISI_BENAR') {
+        currentSecretCode = generateSecretCode(selectedDigitMode);
+        roomPayload.digitMode = selectedDigitMode;
+        roomPayload.secretCode = currentSecretCode;
+      } else {
+        currentBoomSecret = Math.floor(Math.random() * (selectedBoomRange + 1));
+        currentBoomLower = 0;
+        currentBoomUpper = selectedBoomRange;
+
+        roomPayload.boomRange = selectedBoomRange;
+        roomPayload.secretCode = currentBoomSecret.toString();
+        roomPayload.boomLower = 0;
+        roomPayload.boomUpper = selectedBoomRange;
+      }
+
+      roomRef = db.ref('rooms/' + currentRoomPin);
+      roomRef.set(roomPayload);
 
       document.getElementById('host-setup-card').classList.add('hidden');
       document.getElementById('host-active-lobby').classList.remove('hidden');
       document.getElementById('display-game-pin').innerText = currentRoomPin;
-      document.getElementById('display-digit-mode-badge').innerText = selectedDigitMode + ' Digit';
+
+      const badgeText = selectedGameType === 'POSISI_BENAR' 
+        ? `Posisi Benar (${selectedDigitMode} Digit)` 
+        : `Angka Boom (Range 0 - ${selectedBoomRange})`;
+      document.getElementById('display-game-type-badge').innerText = badgeText;
 
       const currentUrl = window.location.href.split('?')[0];
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl + '?pin=' + currentRoomPin)}`;
@@ -888,6 +1029,22 @@
       showScreen('screen-host-dashboard');
       document.getElementById('dash-pin').innerText = currentRoomPin;
       document.getElementById('dash-session-num').innerText = '#' + currentSessionNumber;
+
+      const titleEl = document.getElementById('dash-game-title');
+      const feedColFeedback = document.getElementById('feed-col-feedback');
+      const boomBoundsCard = document.getElementById('host-boom-bounds-card');
+
+      if (selectedGameType === 'POSISI_BENAR') {
+        titleEl.innerText = `SESI MONITORING: POSISI BENAR (${selectedDigitMode} DIGIT)`;
+        feedColFeedback.innerText = "ANGKA BENAR";
+        boomBoundsCard.classList.add('hidden');
+      } else {
+        titleEl.innerText = `SESI MONITORING: ANGKA BOOM (0 - ${selectedBoomRange})`;
+        feedColFeedback.innerText = "UMPAN BALIK / STATUS";
+        boomBoundsCard.classList.remove('hidden');
+        document.getElementById('host-boom-lower').innerText = currentBoomLower;
+        document.getElementById('host-boom-upper').innerText = currentBoomUpper;
+      }
       
       startHostTimer();
       listenHostFeed();
@@ -932,24 +1089,34 @@
       if (!currentRoomPin) return;
       playSound('click');
 
-      const newSecretCode = generateSecretCode(selectedDigitMode);
-      currentSecretCode = newSecretCode;
       currentSessionNumber = 1;
-
       if (activeTimerInterval) clearInterval(activeTimerInterval);
 
       // Clear previous guesses in Firebase
       db.ref(`rooms/${currentRoomPin}/guesses`).remove();
 
-      // Reset room state in Firebase
-      roomRef.update({
+      let resetData = {
         status: 'LOBBY',
-        secretCode: newSecretCode,
         sessionNumber: 1,
         timer: 15,
         sessionActive: false,
         winner: null
-      });
+      };
+
+      if (selectedGameType === 'POSISI_BENAR') {
+        currentSecretCode = generateSecretCode(selectedDigitMode);
+        resetData.secretCode = currentSecretCode;
+      } else {
+        currentBoomSecret = Math.floor(Math.random() * (selectedBoomRange + 1));
+        currentBoomLower = 0;
+        currentBoomUpper = selectedBoomRange;
+        resetData.secretCode = currentBoomSecret.toString();
+        resetData.boomLower = 0;
+        resetData.boomUpper = selectedBoomRange;
+      }
+
+      // Reset room state in Firebase
+      roomRef.update(resetData);
 
       // Show Host Lobby screen
       showScreen('screen-host-lobby');
@@ -965,17 +1132,33 @@
           sessionActive: false,
           winner: {
             nickname: 'Host (Diakhiri)',
-            secretCode: currentSecretCode
+            secretCode: currentSecretCode || currentBoomSecret
           }
         });
       }
     }
 
     /* =========================================================================
-       7. HOST LIVE FEED (STRICT 10-ROW FIFO LIMIT & POSISI BENAR HIDDEN)
+       7. HOST LIVE FEED (STRICT 10-ROW FIFO & DYNAMIC FEEDBACK)
        ========================================================================= */
     function listenHostFeed() {
       guessesRef = db.ref(`rooms/${currentRoomPin}/guesses`);
+
+      // Listen for Boom range updates
+      if (selectedGameType === 'ANGKA_BOOM') {
+        db.ref(`rooms/${currentRoomPin}`).on('value', (snap) => {
+          const r = snap.val();
+          if (!r) return;
+          if (r.boomLower !== undefined) {
+            currentBoomLower = r.boomLower;
+            document.getElementById('host-boom-lower').innerText = r.boomLower;
+          }
+          if (r.boomUpper !== undefined) {
+            currentBoomUpper = r.boomUpper;
+            document.getElementById('host-boom-upper').innerText = r.boomUpper;
+          }
+        });
+      }
       
       guessesRef.on('value', (snapshot) => {
         const guessesObj = snapshot.val() || {};
@@ -986,7 +1169,6 @@
 
         // STRICT FIFO LIMIT: Top 10 latest guesses
         const feed10 = guessesList.slice(0, 10);
-
         const container = document.getElementById('host-feed-list');
 
         if (feed10.length === 0) {
@@ -997,35 +1179,60 @@
           return;
         }
 
-        container.innerHTML = feed10.map((g) => `
-          <div class="grid grid-cols-12 gap-2 px-4 py-3 bg-slate-800/90 hover:bg-slate-800 border border-white/10 rounded-2xl items-center text-center font-bold text-sm animate-slide-in">
-            <div class="col-span-2 text-cyan-400 font-extrabold text-xs">#${g.sessionNumber || 1}</div>
-            <div class="col-span-4 text-left text-amber-300 font-extrabold truncate flex items-center gap-1.5">
-              <i class="fa-solid fa-user-circle text-purple-400"></i> ${escapeHtml(g.nickname)}
-            </div>
-            <div class="col-span-3 font-black text-white text-base tracking-widest bg-slate-950/60 py-1 rounded-xl border border-white/5">
-              ${g.guess}
-            </div>
-            <div class="col-span-3">
-              <span class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-black text-xs">
-                ${g.angkaBenar}
-              </span>
-            </div>
-          </div>
-        `).join('');
+        container.innerHTML = feed10.map((g) => {
+          let feedbackBadge = '';
 
-        // Check Winner Trigger (Posisi Benar == digitMode)
-        const winningGuess = guessesList.find(g => g.posisiBenar === selectedDigitMode);
-        if (winningGuess) {
-          if (activeTimerInterval) clearInterval(activeTimerInterval);
-          roomRef.update({
-            status: 'FINISHED',
-            sessionActive: false,
-            winner: {
-              nickname: winningGuess.nickname,
-              guess: winningGuess.guess
+          if (selectedGameType === 'POSISI_BENAR') {
+            feedbackBadge = `<span class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-black text-xs">${g.angkaBenar}</span>`;
+          } else {
+            if (g.boomStatus === 'BOOM') {
+              feedbackBadge = `<span class="px-3 py-1 rounded-full bg-rose-500/30 text-rose-300 border border-rose-500/60 font-black text-xs animate-bounce">💣 BOOM!</span>`;
+            } else if (g.boomStatus === 'BATAS_BAWAH') {
+              feedbackBadge = `<span class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-black text-xs">▲ Batas Bawah Baru</span>`;
+            } else if (g.boomStatus === 'BATAS_ATAS') {
+              feedbackBadge = `<span class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 font-black text-xs">▼ Batas Atas Baru</span>`;
+            } else {
+              feedbackBadge = `<span class="px-3 py-1 rounded-full bg-slate-700 text-slate-300 text-xs">Mendekati</span>`;
             }
-          });
+          }
+
+          return `
+            <div class="grid grid-cols-12 gap-2 px-4 py-3 bg-slate-800/90 hover:bg-slate-800 border border-white/10 rounded-2xl items-center text-center font-bold text-sm animate-slide-in">
+              <div class="col-span-2 text-cyan-400 font-extrabold text-xs">#${g.sessionNumber || 1}</div>
+              <div class="col-span-4 text-left text-amber-300 font-extrabold truncate flex items-center gap-1.5">
+                <i class="fa-solid fa-user-circle text-purple-400"></i> ${escapeHtml(g.nickname)}
+              </div>
+              <div class="col-span-3 font-black text-white text-base tracking-widest bg-slate-950/60 py-1 rounded-xl border border-white/5">
+                ${g.guess}
+              </div>
+              <div class="col-span-3">
+                ${feedbackBadge}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Winner Checking
+        if (selectedGameType === 'POSISI_BENAR') {
+          const winningGuess = guessesList.find(g => g.posisiBenar === selectedDigitMode);
+          if (winningGuess) {
+            if (activeTimerInterval) clearInterval(activeTimerInterval);
+            roomRef.update({
+              status: 'FINISHED',
+              sessionActive: false,
+              winner: { nickname: winningGuess.nickname, guess: winningGuess.guess }
+            });
+          }
+        } else {
+          const boomWinner = guessesList.find(g => g.boomStatus === 'BOOM');
+          if (boomWinner) {
+            if (activeTimerInterval) clearInterval(activeTimerInterval);
+            roomRef.update({
+              status: 'FINISHED',
+              sessionActive: false,
+              winner: { nickname: boomWinner.nickname, guess: boomWinner.guess }
+            });
+          }
         }
       });
 
@@ -1033,7 +1240,7 @@
         const data = snapshot.val();
         if (!data) return;
         if (data.status === 'FINISHED' && data.winner) {
-          triggerWinnerCelebration(data.winner.nickname, data.secretCode || currentSecretCode);
+          triggerWinnerCelebration(data.winner.nickname, data.secretCode || currentSecretCode || currentBoomSecret);
         }
       });
     }
@@ -1077,9 +1284,14 @@
         const room = snapshot.val();
         if (!room) return;
 
-        selectedDigitMode = room.digitMode || 4;
+        selectedGameType = room.gameType || 'POSISI_BENAR';
+        selectedDigitMode = room.digitMode || 3;
+        selectedBoomRange = room.boomRange || 1000;
         currentSecretCode = room.secretCode || '';
         currentSessionNumber = room.sessionNumber || 1;
+
+        if (room.boomLower !== undefined) currentBoomLower = room.boomLower;
+        if (room.boomUpper !== undefined) currentBoomUpper = room.boomUpper;
 
         const timerVal = room.timer !== undefined ? room.timer : 0;
         const activeState = room.sessionActive === true && timerVal > 0;
@@ -1118,11 +1330,15 @@
           if (gameplayScreen.classList.contains('hidden')) {
             showScreen('screen-player-gameplay');
             document.getElementById('game-player-nickname').innerText = localPlayerNickname;
-            document.getElementById('player-mode-digit-text').innerText = selectedDigitMode + ' DIGIT';
-            renderDigitSlots();
+            setupPlayerUIForGameType();
           }
 
-          // Check if player already submitted for this specific session
+          // Update Boom bounds on player screen
+          if (selectedGameType === 'ANGKA_BOOM') {
+            document.getElementById('player-boom-lower').innerText = currentBoomLower;
+            document.getElementById('player-boom-upper').innerText = currentBoomUpper;
+          }
+
           checkPlayerSessionSubmittedState();
         } else if (room.status === 'FINISHED' && room.winner) {
           triggerWinnerCelebration(room.winner.nickname, room.secretCode);
@@ -1133,13 +1349,50 @@
       listenMyGuessesHistory();
     }
 
+    function setupPlayerUIForGameType() {
+      const modeText = document.getElementById('player-mode-digit-text');
+      const inputLabel = document.getElementById('player-input-label');
+      const slotsContainer = document.getElementById('digit-slots-container');
+      const boomInputContainer = document.getElementById('boom-input-container');
+      const boomBoundsBanner = document.getElementById('player-boom-bounds-banner');
+      const tableThead = document.getElementById('player-history-thead');
+
+      if (selectedGameType === 'POSISI_BENAR') {
+        inputLabel.innerHTML = `MASUKKAN <span id="player-mode-digit-text" class="text-amber-300">${selectedDigitMode} DIGIT</span> ANGKA UNIK`;
+        slotsContainer.classList.remove('hidden');
+        boomInputContainer.classList.add('hidden');
+        boomBoundsBanner.classList.add('hidden');
+
+        tableThead.innerHTML = `
+          <th class="py-2 px-2">SESI</th>
+          <th class="py-2 px-3 text-left">TEBAKAN</th>
+          <th class="py-2 px-2 text-emerald-400">POSISI BENAR</th>
+          <th class="py-2 px-2 text-cyan-400">ANGKA BENAR</th>
+        `;
+
+        renderDigitSlots();
+      } else {
+        inputLabel.innerHTML = `TEBAK ANGKA ANTTARA <span class="text-cyan-300">${currentBoomLower}</span> S/D <span class="text-rose-300">${currentBoomUpper}</span>`;
+        slotsContainer.classList.add('hidden');
+        boomInputContainer.classList.remove('hidden');
+        boomBoundsBanner.classList.remove('hidden');
+
+        tableThead.innerHTML = `
+          <th class="py-2 px-2">SESI</th>
+          <th class="py-2 px-3 text-left">TEBAKAN</th>
+          <th class="py-2 px-4 text-cyan-400 text-center" colspan="2">UMPAN BALIK STATUS</th>
+        `;
+
+        renderBoomInput();
+      }
+    }
+
     function checkPlayerSessionSubmittedState() {
       db.ref(`rooms/${currentRoomPin}/guesses`).once('value', (snapshot) => {
         const guessesObj = snapshot.val() || {};
         const myGuesses = Object.values(guessesObj).filter(g => g.playerId === localPlayerId);
         
         hasSubmittedThisSession = myGuesses.some(g => g.sessionNumber === currentSessionNumber);
-
         updatePlayerKeypadUI();
       });
     }
@@ -1156,7 +1409,6 @@
       document.getElementById('banner-session-num').innerText = '#' + currentSessionNumber;
 
       if (hasSubmittedThisSession) {
-        // Player already submitted 1/1 for this session -> Lock Keypad
         if (submittedBanner) submittedBanner.classList.remove('hidden');
         if (pauseBanner) pauseBanner.classList.add('hidden');
         if (container) container.classList.add('opacity-40', 'pointer-events-none');
@@ -1165,7 +1417,6 @@
         if (clearBtn) clearBtn.disabled = true;
         if (deleteBtn) deleteBtn.disabled = true;
       } else if (!isSessionActive) {
-        // Session Timer is 0 or Paused -> Lock Keypad
         if (submittedBanner) submittedBanner.classList.add('hidden');
         if (pauseBanner) pauseBanner.classList.remove('hidden');
         if (container) container.classList.add('opacity-40', 'pointer-events-none');
@@ -1174,7 +1425,6 @@
         if (clearBtn) clearBtn.disabled = true;
         if (deleteBtn) deleteBtn.disabled = true;
       } else {
-        // ACTIVE SESSION & NOT YET SUBMITTED -> UNLOCK KEYPAD!
         if (submittedBanner) submittedBanner.classList.add('hidden');
         if (pauseBanner) pauseBanner.classList.add('hidden');
         if (container) container.classList.remove('opacity-40', 'pointer-events-none');
@@ -1182,12 +1432,20 @@
         numpadBtns.forEach(b => b.disabled = false);
         if (clearBtn) clearBtn.disabled = false;
         if (deleteBtn) deleteBtn.disabled = false;
-        updateNumpadDisabledState();
+
+        if (selectedGameType === 'POSISI_BENAR') {
+          updateNumpadDisabledState();
+        } else {
+          numpadBtns.forEach(b => {
+            b.classList.remove('opacity-30', 'cursor-not-allowed');
+            b.disabled = false;
+          });
+        }
       }
     }
 
     /* =========================================================================
-       9. NUMPAD & INPUT SLOTS CONTROL
+       9. NUMPAD & INPUT CONTROL
        ========================================================================= */
     function renderDigitSlots() {
       const container = document.getElementById('digit-slots-container');
@@ -1204,20 +1462,35 @@
       updateNumpadDisabledState();
     }
 
+    function renderBoomInput() {
+      const display = document.getElementById('boom-input-display');
+      const val = currentInputDigits.join('');
+      display.innerText = val ? val : 'Ketik Angka...';
+    }
+
     function pressNumpad(num) {
       if (!isSessionActive || hasSubmittedThisSession) return;
       document.getElementById('keypad-error-msg').innerText = '';
 
-      if (currentInputDigits.includes(num)) {
-        playSound('tick');
-        document.getElementById('keypad-error-msg').innerText = 'Angka harus unik! (Tidak boleh ada angka kembar)';
-        return;
-      }
+      if (selectedGameType === 'POSISI_BENAR') {
+        if (currentInputDigits.includes(num)) {
+          playSound('tick');
+          document.getElementById('keypad-error-msg').innerText = 'Angka harus unik! (Tidak boleh ada angka kembar)';
+          return;
+        }
 
-      if (currentInputDigits.length < selectedDigitMode) {
-        playSound('click');
-        currentInputDigits.push(num);
-        renderDigitSlots();
+        if (currentInputDigits.length < selectedDigitMode) {
+          playSound('click');
+          currentInputDigits.push(num);
+          renderDigitSlots();
+        }
+      } else {
+        // ANGKA BOOM MODE
+        if (currentInputDigits.length < 5) {
+          playSound('click');
+          currentInputDigits.push(num);
+          renderBoomInput();
+        }
       }
     }
 
@@ -1227,7 +1500,8 @@
         playSound('click');
         currentInputDigits.pop();
         document.getElementById('keypad-error-msg').innerText = '';
-        renderDigitSlots();
+        if (selectedGameType === 'POSISI_BENAR') renderDigitSlots();
+        else renderBoomInput();
       }
     }
 
@@ -1236,11 +1510,12 @@
       playSound('click');
       currentInputDigits = [];
       document.getElementById('keypad-error-msg').innerText = '';
-      renderDigitSlots();
+      if (selectedGameType === 'POSISI_BENAR') renderDigitSlots();
+      else renderBoomInput();
     }
 
     function updateNumpadDisabledState() {
-      if (!isSessionActive || hasSubmittedThisSession) return;
+      if (!isSessionActive || hasSubmittedThisSession || selectedGameType !== 'POSISI_BENAR') return;
       const buttons = document.querySelectorAll('.numpad-btn');
       buttons.forEach(btn => {
         const val = btn.innerText.trim();
@@ -1265,34 +1540,76 @@
         return;
       }
 
-      if (currentInputDigits.length < selectedDigitMode) {
-        playSound('tick');
-        document.getElementById('keypad-error-msg').innerText = `Lengkapi ${selectedDigitMode} digit angka tebakan!`;
-        return;
+      if (selectedGameType === 'POSISI_BENAR') {
+        if (currentInputDigits.length < selectedDigitMode) {
+          playSound('tick');
+          document.getElementById('keypad-error-msg').innerText = `Lengkapi ${selectedDigitMode} digit angka tebakan!`;
+          return;
+        }
+
+        const guessStr = currentInputDigits.join('');
+        const result = evaluatePosisiBenar(currentSecretCode, guessStr);
+
+        playSound('success');
+
+        db.ref(`rooms/${currentRoomPin}/guesses`).push({
+          playerId: localPlayerId,
+          nickname: localPlayerNickname,
+          guess: guessStr,
+          posisiBenar: result.posisiBenar,
+          angkaBenar: result.angkaBenar,
+          sessionNumber: currentSessionNumber,
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+
+      } else {
+        // ANGKA BOOM SUBMISSION
+        if (currentInputDigits.length === 0) {
+          playSound('tick');
+          document.getElementById('keypad-error-msg').innerText = 'Masukkan angka tebakan Anda!';
+          return;
+        }
+
+        const guessNum = parseInt(currentInputDigits.join(''), 10);
+        const secretVal = parseInt(currentSecretCode, 10);
+
+        if (isNaN(guessNum)) return;
+
+        let boomStatus = 'NEUTRAL';
+
+        if (guessNum === secretVal) {
+          boomStatus = 'BOOM';
+          playSound('boom');
+        } else if (guessNum < secretVal && guessNum > currentBoomLower) {
+          boomStatus = 'BATAS_BAWAH';
+          currentBoomLower = guessNum;
+          db.ref(`rooms/${currentRoomPin}`).update({ boomLower: guessNum });
+          playSound('success');
+        } else if (guessNum > secretVal && guessNum < currentBoomUpper) {
+          boomStatus = 'BATAS_ATAS';
+          currentBoomUpper = guessNum;
+          db.ref(`rooms/${currentRoomPin}`).update({ boomUpper: guessNum });
+          playSound('success');
+        } else {
+          playSound('tick');
+        }
+
+        db.ref(`rooms/${currentRoomPin}/guesses`).push({
+          playerId: localPlayerId,
+          nickname: localPlayerNickname,
+          guess: guessNum.toString(),
+          boomStatus: boomStatus,
+          sessionNumber: currentSessionNumber,
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
       }
-
-      const guessStr = currentInputDigits.join('');
-
-      // Evaluate Posisi & Angka
-      const result = evaluateGuess(currentSecretCode, guessStr);
-
-      playSound('success');
-
-      // Save guess with currentSessionNumber to Firebase
-      db.ref(`rooms/${currentRoomPin}/guesses`).push({
-        playerId: localPlayerId,
-        nickname: localPlayerNickname,
-        guess: guessStr,
-        posisiBenar: result.posisiBenar,
-        angkaBenar: result.angkaBenar,
-        sessionNumber: currentSessionNumber,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
-      });
 
       // Clear input & Lock Keypad for this session
       currentInputDigits = [];
       hasSubmittedThisSession = true;
-      renderDigitSlots();
+      if (selectedGameType === 'POSISI_BENAR') renderDigitSlots();
+      else renderBoomInput();
+
       updatePlayerKeypadUI();
       document.getElementById('keypad-error-msg').innerText = '';
     }
@@ -1321,39 +1638,74 @@
         const reversedGuesses = [...myGuesses].reverse();
 
         tbody.innerHTML = reversedGuesses.map((g) => {
-          return `
-            <tr class="border-b border-white/5 hover:bg-white/5 transition animate-slide-in">
-              <td class="py-2 px-2 text-cyan-400 font-bold">#${g.sessionNumber || 1}</td>
-              <td class="py-2 px-3 text-amber-300 text-sm font-black tracking-widest fredoka text-left">${g.guess}</td>
-              <td class="py-2 px-2">
-                <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold">
-                  ${g.posisiBenar}
-                </span>
-              </td>
-              <td class="py-2 px-2">
-                <span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[11px] font-bold">
-                  ${g.angkaBenar}
-                </span>
-              </td>
-            </tr>
-          `;
+          if (selectedGameType === 'POSISI_BENAR') {
+            return `
+              <tr class="border-b border-white/5 hover:bg-white/5 transition animate-slide-in">
+                <td class="py-2 px-2 text-cyan-400 font-bold">#${g.sessionNumber || 1}</td>
+                <td class="py-2 px-3 text-amber-300 text-sm font-black tracking-widest fredoka text-left">${g.guess}</td>
+                <td class="py-2 px-2">
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold">
+                    ${g.posisiBenar}
+                  </span>
+                </td>
+                <td class="py-2 px-2">
+                  <span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[11px] font-bold">
+                    ${g.angkaBenar}
+                  </span>
+                </td>
+              </tr>
+            `;
+          } else {
+            let statusBadge = '';
+            if (g.boomStatus === 'BOOM') {
+              statusBadge = `<span class="px-2 py-0.5 rounded-full bg-rose-500/30 text-rose-300 border border-rose-500/50 font-bold text-xs">💣 BOOM!</span>`;
+            } else if (g.boomStatus === 'BATAS_BAWAH') {
+              statusBadge = `<span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs">▲ Batas Bawah Baru</span>`;
+            } else if (g.boomStatus === 'BATAS_ATAS') {
+              statusBadge = `<span class="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 text-xs">▼ Batas Atas Baru</span>`;
+            } else {
+              statusBadge = `<span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-xs">Di Luar Batas / Sama</span>`;
+            }
+
+            return `
+              <tr class="border-b border-white/5 hover:bg-white/5 transition animate-slide-in">
+                <td class="py-2 px-2 text-cyan-400 font-bold">#${g.sessionNumber || 1}</td>
+                <td class="py-2 px-3 text-amber-300 text-sm font-black tracking-widest fredoka text-left">${g.guess}</td>
+                <td class="py-2 px-4 text-center" colspan="2">
+                  ${statusBadge}
+                </td>
+              </tr>
+            `;
+          }
         }).join('');
 
-        // Update submitted status for current session
         hasSubmittedThisSession = myGuesses.some(g => g.sessionNumber === currentSessionNumber);
         updatePlayerKeypadUI();
       });
     }
 
     /* =========================================================================
-       11. WINNER & CELEBRATION
+       11. WINNER CELEBRATION
        ========================================================================= */
     function triggerWinnerCelebration(winnerNickname, secretCode) {
       playSound('win');
       showScreen('screen-finished');
 
+      const titleEl = document.getElementById('finished-title-text');
+      const badgeIcon = document.getElementById('finished-icon-badge');
+
+      if (selectedGameType === 'POSISI_BENAR') {
+        titleEl.innerText = "PEMENANG KODE RAHASIA!";
+        badgeIcon.innerText = "🏆";
+      } else {
+        titleEl.innerText = "KENA ANGKA BOOM! 💣";
+        badgeIcon.innerText = "💥";
+      }
+
       document.getElementById('winner-name-display').innerText = winnerNickname;
-      document.getElementById('revealed-secret-code').innerText = (secretCode || currentSecretCode).split('').join(' ');
+      
+      const codeStr = (secretCode || currentSecretCode || currentBoomSecret).toString();
+      document.getElementById('revealed-secret-code').innerText = codeStr.split('').join(' ');
 
       const hostActions = document.getElementById('finished-host-actions');
       const playerActions = document.getElementById('finished-player-actions');
@@ -1376,7 +1728,7 @@
     }
 
     /* =========================================================================
-       12. UTILITY FUNCTIONS & URL AUTO-JOIN
+       12. UTILITY & INITIALIZATION
        ========================================================================= */
     function escapeHtml(str) {
       return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
