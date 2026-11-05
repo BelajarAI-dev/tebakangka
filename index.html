@@ -360,10 +360,30 @@
         </div>
       </div>
 
+      <!-- LIVE SUBMISSION COUNTER & REVEAL STATUS BANNER -->
+      <div id="host-submission-status-banner" class="w-full bg-gradient-to-r from-purple-900/90 via-indigo-900/90 to-purple-950/90 border-2 border-purple-400/50 rounded-2xl p-4 mb-4 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row justify-between items-center gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-400/20 border border-amber-400/50 flex items-center justify-center text-xl text-amber-300">
+            ⚡
+          </div>
+          <div>
+            <span class="text-xs text-slate-300 font-bold uppercase tracking-wider block">STATUS ANGKET TEBAKAN SESI</span>
+            <h4 id="host-live-counter-text" class="text-lg font-black fredoka text-amber-300">
+              0 Peserta Sudah Mengirim Tebakan
+            </h4>
+          </div>
+        </div>
+
+        <div id="host-reveal-badge" class="px-3.5 py-1.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40 text-xs font-bold flex items-center gap-2">
+          <i class="fa-solid fa-lock text-amber-400"></i>
+          <span id="host-reveal-status-text">Tebakan Terkunci (Revealed Saat 0s)</span>
+        </div>
+      </div>
+
       <!-- ANGKA BOOM BOUNDS BANNER (ONLY DISPLAYED IN ANGKA BOOM MODE) -->
       <div id="host-boom-bounds-card" class="w-full bg-gradient-to-r from-purple-900/90 via-indigo-900/90 to-slate-900/90 border-4 border-rose-500/50 rounded-3xl p-5 mb-4 shadow-2xl text-center backdrop-blur-xl hidden">
         <span class="text-xs font-bold text-rose-300 uppercase tracking-widest block mb-1">
-          💣 RENTANG ANGKA BOOM SAAT INI
+          💣 RENTANG ANGKA BOOM PROYEKTOR
         </span>
         <div class="flex justify-center items-center gap-4 sm:gap-8 my-2">
           <div class="bg-slate-950/80 px-6 py-3 rounded-2xl border-2 border-cyan-400">
@@ -376,14 +396,17 @@
             <span id="host-boom-upper" class="text-3xl sm:text-5xl font-black fredoka text-rose-300">1000</span>
           </div>
         </div>
+        <p id="host-boom-notice" class="text-[11px] text-slate-400 italic mt-1">
+          Batas proyektor akan diperbarui secara otomatis ketika timer sesi mencapai 0s.
+        </p>
       </div>
 
-      <!-- LIVE FEED TABLE (MAX 10 FIFO ROWS) -->
+      <!-- LIVE FEED TABLE (MAX 10 FIFO ROWS - REVEALED ON TIMER 0s) -->
       <div class="w-full bg-slate-900/90 border-4 border-purple-500/30 rounded-3xl p-5 sm:p-7 shadow-2xl backdrop-blur-xl">
         <div class="flex justify-between items-center mb-4 pb-2 border-b border-white/10">
           <h4 class="text-lg font-bold fredoka text-slate-200 flex items-center gap-2">
-            <i class="fa-solid fa-stream text-amber-400"></i> FEED TEBAKAN LANGSUNG 
-            <span class="text-xs font-semibold text-slate-400">(Maksimal 10 Baris Terbaru)</span>
+            <i class="fa-solid fa-stream text-amber-400"></i> FEED TEBAKAN TERBUKA 
+            <span class="text-xs font-semibold text-slate-400">(Maksimal 10 Baris Sesi Berakhir)</span>
           </h4>
           <span class="text-xs px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
             <i class="fa-solid fa-circle text-[8px] animate-ping mr-1"></i> Realtime Sync
@@ -399,9 +422,9 @@
         </div>
 
         <!-- FIFO CONTAINER FOR 10 ROWS -->
-        <div id="host-feed-list" class="space-y-2 min-h-[360px]">
+        <div id="host-feed-list" class="space-y-2 min-h-[320px]">
           <p id="feed-empty-msg" class="text-slate-400 text-sm text-center py-16 italic">
-            Belum ada tebakan dikirim. Menunggu tebakan dari peserta...
+            Belum ada tebakan sesi berakhir. Tebakan sesi berjalan akan muncul saat timer 0s...
           </p>
         </div>
       </div>
@@ -488,7 +511,7 @@
         <p class="text-sm font-black fredoka text-white flex items-center justify-center gap-2">
           <i class="fa-solid fa-circle-check text-emerald-200"></i> TEBAKAN SESI <span id="banner-session-num">#1</span> TERKIRIM! (1/1)
         </p>
-        <p class="text-[11px] text-emerald-100 font-semibold">Menunggu Host menekan "Lanjut Sesi" untuk sesi berikutnya...</p>
+        <p class="text-[11px] text-emerald-100 font-semibold">Hasil privat tersimpan di riwayat Anda. Menunggu sesi berikutnya...</p>
       </div>
 
       <div id="session-pause-banner" class="w-full bg-gradient-to-r from-amber-600/90 to-rose-600/90 border-2 border-amber-300 rounded-2xl p-3 mb-3 text-center shadow-lg backdrop-blur-md hidden animate-pulse-subtle">
@@ -677,13 +700,12 @@
     let localPlayerNickname = '';
     let currentSecretCode = '';
     let currentBoomSecret = 0;
-    let currentBoomLower = 0;
-    let currentBoomUpper = 1000;
 
     let activeTimerInterval = null;
     let currentInputDigits = [];
     let currentSessionNumber = 1;
     let isSessionActive = true;
+    let currentTimerVal = 15;
     let hasSubmittedThisSession = false;
     let roomRef = null;
     let guessesRef = null;
@@ -966,8 +988,6 @@
         roomPayload.secretCode = currentSecretCode;
       } else {
         currentBoomSecret = Math.floor(Math.random() * (selectedBoomRange + 1));
-        currentBoomLower = 0;
-        currentBoomUpper = selectedBoomRange;
 
         roomPayload.boomRange = selectedBoomRange;
         roomPayload.secretCode = currentBoomSecret.toString();
@@ -1042,8 +1062,8 @@
         titleEl.innerText = `SESI MONITORING: ANGKA BOOM (0 - ${selectedBoomRange})`;
         feedColFeedback.innerText = "UMPAN BALIK / STATUS";
         boomBoundsCard.classList.remove('hidden');
-        document.getElementById('host-boom-lower').innerText = currentBoomLower;
-        document.getElementById('host-boom-upper').innerText = currentBoomUpper;
+        document.getElementById('host-boom-lower').innerText = 0;
+        document.getElementById('host-boom-upper').innerText = selectedBoomRange;
       }
       
       startHostTimer();
@@ -1108,8 +1128,6 @@
         resetData.secretCode = currentSecretCode;
       } else {
         currentBoomSecret = Math.floor(Math.random() * (selectedBoomRange + 1));
-        currentBoomLower = 0;
-        currentBoomUpper = selectedBoomRange;
         resetData.secretCode = currentBoomSecret.toString();
         resetData.boomLower = 0;
         resetData.boomUpper = selectedBoomRange;
@@ -1139,108 +1157,158 @@
     }
 
     /* =========================================================================
-       7. HOST LIVE FEED (STRICT 10-ROW FIFO & DYNAMIC FEEDBACK)
+       7. HOST LIVE FEED (DELAYED PROJECTOR REVEAL & RECALCULATED BOUNDS AT 0s)
        ========================================================================= */
     function listenHostFeed() {
       guessesRef = db.ref(`rooms/${currentRoomPin}/guesses`);
 
-      // Listen for Boom range updates
-      if (selectedGameType === 'ANGKA_BOOM') {
-        db.ref(`rooms/${currentRoomPin}`).on('value', (snap) => {
-          const r = snap.val();
-          if (!r) return;
-          if (r.boomLower !== undefined) {
-            currentBoomLower = r.boomLower;
-            document.getElementById('host-boom-lower').innerText = r.boomLower;
-          }
-          if (r.boomUpper !== undefined) {
-            currentBoomUpper = r.boomUpper;
-            document.getElementById('host-boom-upper').innerText = r.boomUpper;
-          }
-        });
-      }
-      
-      guessesRef.on('value', (snapshot) => {
-        const guessesObj = snapshot.val() || {};
-        const guessesList = Object.values(guessesObj);
+      // Combined listener for Room State + Guesses
+      db.ref(`rooms/${currentRoomPin}`).on('value', (snapshot) => {
+        const roomData = snapshot.val();
+        if (!roomData) return;
+
+        const sessionActive = roomData.sessionActive === true;
+        const timerVal = roomData.timer !== undefined ? roomData.timer : 0;
+        const currentSess = roomData.sessionNumber || 1;
+        const isTimerRunning = sessionActive && timerVal > 0;
+
+        // Fetch Guesses
+        const guessesObj = roomData.guesses || {};
+        const allGuesses = Object.values(guessesObj);
+
+        // 1. Live Submissions Counter for Current Active Session
+        const currentSessionGuesses = allGuesses.filter(g => g.sessionNumber === currentSess);
+        const submittedCount = currentSessionGuesses.length;
+
+        const counterText = document.getElementById('host-live-counter-text');
+        const badgeStatusText = document.getElementById('host-reveal-status-text');
+        const badgeBox = document.getElementById('host-reveal-badge');
+
+        if (counterText) {
+          counterText.innerText = `${submittedCount} Peserta Sudah Mengirim Tebakan (Sesi #${currentSess})`;
+        }
+
+        if (isTimerRunning) {
+          if (badgeStatusText) badgeStatusText.innerText = 'Tebakan Terkunci (Revealed Saat 0s)';
+          if (badgeBox) badgeBox.className = 'px-3.5 py-1.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40 text-xs font-bold flex items-center gap-2';
+        } else {
+          if (badgeStatusText) badgeStatusText.innerText = 'Tebakan Sesi Terbuka!';
+          if (badgeBox) badgeBox.className = 'px-3.5 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-xs font-bold flex items-center gap-2';
+        }
+
+        // 2. Filter Guesses for Host Projector FIFO Feed
+        // - While timer > 0s (active session): Show ONLY revealed guesses from completed previous sessions (sessionNumber < currentSess)
+        // - When timer reaches 0s (session ended): Show all guesses up to completed session (sessionNumber <= currentSess)
+        let visibleGuesses = [];
+        if (isTimerRunning) {
+          visibleGuesses = allGuesses.filter(g => g.sessionNumber < currentSess);
+        } else {
+          visibleGuesses = allGuesses.filter(g => g.sessionNumber <= currentSess);
+        }
 
         // Sort newest first
-        guessesList.sort((a, b) => b.timestamp - a.timestamp);
-
-        // STRICT FIFO LIMIT: Top 10 latest guesses
-        const feed10 = guessesList.slice(0, 10);
+        visibleGuesses.sort((a, b) => b.timestamp - a.timestamp);
+        const feed10 = visibleGuesses.slice(0, 10);
         const container = document.getElementById('host-feed-list');
 
         if (feed10.length === 0) {
           container.innerHTML = `
             <p id="feed-empty-msg" class="text-slate-400 text-sm text-center py-16 italic">
-              Belum ada tebakan dikirim. Menunggu tebakan dari peserta...
+              ${isTimerRunning 
+                ? `Tebakan Sesi #${currentSess} sedang berjalan. Detail tebakan akan terbuka saat timer 0s...` 
+                : 'Belum ada tebakan dikirim.'}
             </p>`;
-          return;
+        } else {
+          container.innerHTML = feed10.map((g) => {
+            let feedbackBadge = '';
+
+            if (selectedGameType === 'POSISI_BENAR') {
+              feedbackBadge = `<span class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-black text-xs">${g.angkaBenar}</span>`;
+            } else {
+              if (g.boomStatus === 'BOOM') {
+                feedbackBadge = `<span class="px-3 py-1 rounded-full bg-rose-500/30 text-rose-300 border border-rose-500/60 font-black text-xs animate-bounce">💣 BOOM!</span>`;
+              } else if (g.boomStatus === 'BATAS_BAWAH') {
+                feedbackBadge = `<span class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-black text-xs">▲ Batas Bawah Baru</span>`;
+              } else if (g.boomStatus === 'BATAS_ATAS') {
+                feedbackBadge = `<span class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 font-black text-xs">▼ Batas Atas Baru</span>`;
+              } else {
+                feedbackBadge = `<span class="px-3 py-1 rounded-full bg-slate-700 text-slate-300 text-xs">Mendekati</span>`;
+              }
+            }
+
+            return `
+              <div class="grid grid-cols-12 gap-2 px-4 py-3 bg-slate-800/90 hover:bg-slate-800 border border-white/10 rounded-2xl items-center text-center font-bold text-sm animate-slide-in">
+                <div class="col-span-2 text-cyan-400 font-extrabold text-xs">#${g.sessionNumber || 1}</div>
+                <div class="col-span-4 text-left text-amber-300 font-extrabold truncate flex items-center gap-1.5">
+                  <i class="fa-solid fa-user-circle text-purple-400"></i> ${escapeHtml(g.nickname)}
+                </div>
+                <div class="col-span-3 font-black text-white text-base tracking-widest bg-slate-950/60 py-1 rounded-xl border border-white/5">
+                  ${g.guess}
+                </div>
+                <div class="col-span-3">
+                  ${feedbackBadge}
+                </div>
+              </div>
+            `;
+          }).join('');
         }
 
-        container.innerHTML = feed10.map((g) => {
-          let feedbackBadge = '';
+        // 3. Recalculate Angka Boom Bounds for Host Projector
+        if (selectedGameType === 'ANGKA_BOOM') {
+          let calcLower = 0;
+          let calcUpper = selectedBoomRange;
+          const secretVal = parseInt(currentSecretCode || roomData.secretCode, 10);
 
+          // Use eligible guesses to determine projector bounds:
+          // Fixed during active 15s session, recalculated upon reaching 0s!
+          const eligibleBoomGuesses = isTimerRunning 
+            ? allGuesses.filter(g => g.sessionNumber < currentSess)
+            : allGuesses.filter(g => g.sessionNumber <= currentSess);
+
+          eligibleBoomGuesses.sort((a, b) => a.timestamp - b.timestamp);
+
+          eligibleBoomGuesses.forEach(g => {
+            const num = parseInt(g.guess, 10);
+            if (!isNaN(num)) {
+              if (num < secretVal && num > calcLower) calcLower = num;
+              if (num > secretVal && num < calcUpper) calcUpper = num;
+            }
+          });
+
+          document.getElementById('host-boom-lower').innerText = calcLower;
+          document.getElementById('host-boom-upper').innerText = calcUpper;
+
+          // When timer hits 0s, update Firebase bounds so player screens also update for next round
+          if (!isTimerRunning && (roomData.boomLower !== calcLower || roomData.boomUpper !== calcUpper)) {
+            db.ref(`rooms/${currentRoomPin}`).update({ boomLower: calcLower, boomUpper: calcUpper });
+          }
+        }
+
+        // 4. Winner Checking
+        if (roomData.status === 'FINISHED' && roomData.winner) {
+          triggerWinnerCelebration(roomData.winner.nickname, roomData.secretCode || currentSecretCode || currentBoomSecret);
+        } else {
           if (selectedGameType === 'POSISI_BENAR') {
-            feedbackBadge = `<span class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-black text-xs">${g.angkaBenar}</span>`;
+            const winningGuess = allGuesses.find(g => g.posisiBenar === selectedDigitMode);
+            if (winningGuess) {
+              if (activeTimerInterval) clearInterval(activeTimerInterval);
+              roomRef.update({
+                status: 'FINISHED',
+                sessionActive: false,
+                winner: { nickname: winningGuess.nickname, guess: winningGuess.guess }
+              });
+            }
           } else {
-            if (g.boomStatus === 'BOOM') {
-              feedbackBadge = `<span class="px-3 py-1 rounded-full bg-rose-500/30 text-rose-300 border border-rose-500/60 font-black text-xs animate-bounce">💣 BOOM!</span>`;
-            } else if (g.boomStatus === 'BATAS_BAWAH') {
-              feedbackBadge = `<span class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-black text-xs">▲ Batas Bawah Baru</span>`;
-            } else if (g.boomStatus === 'BATAS_ATAS') {
-              feedbackBadge = `<span class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 font-black text-xs">▼ Batas Atas Baru</span>`;
-            } else {
-              feedbackBadge = `<span class="px-3 py-1 rounded-full bg-slate-700 text-slate-300 text-xs">Mendekati</span>`;
+            const boomWinner = allGuesses.find(g => g.boomStatus === 'BOOM');
+            if (boomWinner) {
+              if (activeTimerInterval) clearInterval(activeTimerInterval);
+              roomRef.update({
+                status: 'FINISHED',
+                sessionActive: false,
+                winner: { nickname: boomWinner.nickname, guess: boomWinner.guess }
+              });
             }
           }
-
-          return `
-            <div class="grid grid-cols-12 gap-2 px-4 py-3 bg-slate-800/90 hover:bg-slate-800 border border-white/10 rounded-2xl items-center text-center font-bold text-sm animate-slide-in">
-              <div class="col-span-2 text-cyan-400 font-extrabold text-xs">#${g.sessionNumber || 1}</div>
-              <div class="col-span-4 text-left text-amber-300 font-extrabold truncate flex items-center gap-1.5">
-                <i class="fa-solid fa-user-circle text-purple-400"></i> ${escapeHtml(g.nickname)}
-              </div>
-              <div class="col-span-3 font-black text-white text-base tracking-widest bg-slate-950/60 py-1 rounded-xl border border-white/5">
-                ${g.guess}
-              </div>
-              <div class="col-span-3">
-                ${feedbackBadge}
-              </div>
-            </div>
-          `;
-        }).join('');
-
-        // Winner Checking
-        if (selectedGameType === 'POSISI_BENAR') {
-          const winningGuess = guessesList.find(g => g.posisiBenar === selectedDigitMode);
-          if (winningGuess) {
-            if (activeTimerInterval) clearInterval(activeTimerInterval);
-            roomRef.update({
-              status: 'FINISHED',
-              sessionActive: false,
-              winner: { nickname: winningGuess.nickname, guess: winningGuess.guess }
-            });
-          }
-        } else {
-          const boomWinner = guessesList.find(g => g.boomStatus === 'BOOM');
-          if (boomWinner) {
-            if (activeTimerInterval) clearInterval(activeTimerInterval);
-            roomRef.update({
-              status: 'FINISHED',
-              sessionActive: false,
-              winner: { nickname: boomWinner.nickname, guess: boomWinner.guess }
-            });
-          }
-        }
-      });
-
-      roomRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (!data) return;
-        if (data.status === 'FINISHED' && data.winner) {
-          triggerWinnerCelebration(data.winner.nickname, data.secretCode || currentSecretCode || currentBoomSecret);
         }
       });
     }
@@ -1290,10 +1358,8 @@
         currentSecretCode = room.secretCode || '';
         currentSessionNumber = room.sessionNumber || 1;
 
-        if (room.boomLower !== undefined) currentBoomLower = room.boomLower;
-        if (room.boomUpper !== undefined) currentBoomUpper = room.boomUpper;
-
         const timerVal = room.timer !== undefined ? room.timer : 0;
+        currentTimerVal = timerVal;
         const activeState = room.sessionActive === true && timerVal > 0;
         isSessionActive = activeState;
 
@@ -1335,8 +1401,8 @@
 
           // Update Boom bounds on player screen
           if (selectedGameType === 'ANGKA_BOOM') {
-            document.getElementById('player-boom-lower').innerText = currentBoomLower;
-            document.getElementById('player-boom-upper').innerText = currentBoomUpper;
+            document.getElementById('player-boom-lower').innerText = room.boomLower !== undefined ? room.boomLower : 0;
+            document.getElementById('player-boom-upper').innerText = room.boomUpper !== undefined ? room.boomUpper : selectedBoomRange;
           }
 
           checkPlayerSessionSubmittedState();
@@ -1372,7 +1438,7 @@
 
         renderDigitSlots();
       } else {
-        inputLabel.innerHTML = `TEBAK ANGKA ANTTARA <span class="text-cyan-300">${currentBoomLower}</span> S/D <span class="text-rose-300">${currentBoomUpper}</span>`;
+        inputLabel.innerHTML = `TEBAK ANGKA RENTANG SEKARANG`;
         slotsContainer.classList.add('hidden');
         boomInputContainer.classList.remove('hidden');
         boomBoundsBanner.classList.remove('hidden');
@@ -1563,7 +1629,7 @@
         });
 
       } else {
-        // ANGKA BOOM SUBMISSION
+        // ANGKA BOOM SUBMISSION (Private immediate feedback to player)
         if (currentInputDigits.length === 0) {
           playSound('tick');
           document.getElementById('keypad-error-msg').innerText = 'Masukkan angka tebakan Anda!';
@@ -1576,19 +1642,17 @@
         if (isNaN(guessNum)) return;
 
         let boomStatus = 'NEUTRAL';
+        const currentLower = parseInt(document.getElementById('player-boom-lower').innerText, 10) || 0;
+        const currentUpper = parseInt(document.getElementById('player-boom-upper').innerText, 10) || selectedBoomRange;
 
         if (guessNum === secretVal) {
           boomStatus = 'BOOM';
           playSound('boom');
-        } else if (guessNum < secretVal && guessNum > currentBoomLower) {
+        } else if (guessNum < secretVal && guessNum > currentLower) {
           boomStatus = 'BATAS_BAWAH';
-          currentBoomLower = guessNum;
-          db.ref(`rooms/${currentRoomPin}`).update({ boomLower: guessNum });
           playSound('success');
-        } else if (guessNum > secretVal && guessNum < currentBoomUpper) {
+        } else if (guessNum > secretVal && guessNum < currentUpper) {
           boomStatus = 'BATAS_ATAS';
-          currentBoomUpper = guessNum;
-          db.ref(`rooms/${currentRoomPin}`).update({ boomUpper: guessNum });
           playSound('success');
         } else {
           playSound('tick');
@@ -1615,7 +1679,7 @@
     }
 
     /* =========================================================================
-       10. PLAYER GUESS HISTORY TABLE
+       10. PLAYER GUESS HISTORY TABLE (Instant Private Feedback)
        ========================================================================= */
     function listenMyGuessesHistory() {
       db.ref(`rooms/${currentRoomPin}/guesses`).on('value', (snapshot) => {
