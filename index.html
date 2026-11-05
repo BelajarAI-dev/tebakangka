@@ -813,11 +813,13 @@
 
     // --- START GAME & GAME LOOP (HOST) ---
     function startGameAsHost() {
-      db.ref(`rooms/${currentRoomPin}`).update({
-        status: 'PLAYING',
-        sessionNumber: 1,
-        timer: 15,
-        guesses: null
+      // Remove any previous guesses explicitly upon fresh start
+      db.ref(`rooms/${currentRoomPin}/guesses`).remove().then(() => {
+        return db.ref(`rooms/${currentRoomPin}`).update({
+          status: 'PLAYING',
+          sessionNumber: 1,
+          timer: 15
+        });
       }).then(() => {
         document.getElementById('host-subscreen-lobby').classList.add('hidden');
         document.getElementById('host-subscreen-playing').classList.remove('hidden');
@@ -936,17 +938,17 @@
         const guesses = room.guesses || {};
         let guessArray = Object.values(guesses);
 
+        const tbody = document.getElementById('host-table-tbody');
+        if (guessArray.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-slate-500 italic">Belum ada tebakan yang dikirim.</td></tr>`;
+          return;
+        }
+
         // Sort DESCENDING (newest first)
         guessArray.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
 
         // Display top 10 newest guesses
         const feed10 = guessArray.slice(0, 10);
-
-        const tbody = document.getElementById('host-table-tbody');
-        if (feed10.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-slate-500 italic">Belum ada tebakan yang dikirim.</td></tr>`;
-          return;
-        }
 
         if (selectedGameType === 'POSISI_BENAR') {
           tbody.innerHTML = feed10.map(g => `
@@ -1042,7 +1044,7 @@
       });
     }
 
-    // Host Reset Game & Clear History Total
+    // Host Reset Game & Clear History Total Completely
     function restartGameAsHost() {
       if (hostTimerInterval) clearInterval(hostTimerInterval);
       hostSessionNumber = 1;
@@ -1051,15 +1053,16 @@
         ? generateUniqueCode(selectedDigitMode) 
         : generateSecretNumber(selectedBoomRange).toString();
 
-      // Clear guesses node in Firebase completely!
-      db.ref(`rooms/${currentRoomPin}`).update({
-        status: 'LOBBY',
-        secretCode: newSecret,
-        sessionNumber: 1,
-        timer: 15,
-        lowerBound: 0,
-        upperBound: selectedBoomRange,
-        guesses: null
+      // Clear guesses node in Firebase explicitly!
+      db.ref(`rooms/${currentRoomPin}/guesses`).remove().then(() => {
+        return db.ref(`rooms/${currentRoomPin}`).update({
+          status: 'LOBBY',
+          secretCode: newSecret,
+          sessionNumber: 1,
+          timer: 15,
+          lowerBound: 0,
+          upperBound: selectedBoomRange
+        });
       }).then(() => {
         document.getElementById('host-subscreen-finished').classList.add('hidden');
         document.getElementById('host-subscreen-lobby').classList.remove('hidden');
@@ -1118,13 +1121,18 @@
         selectedDigitMode = room.digitMode || 3;
         selectedBoomRange = room.boomRange || 1000;
 
-        // Reset local player input ONLY when game is reset or secret changes
-        if (room.secretCode !== lastKnownRoomSecret || room.status === 'LOBBY' || !room.guesses) {
+        // STRICT RESET OF LOCAL PLAYER HISTORY STATE & DOM ON GAME RESTART / LOBBY / REMOVED GUESSES
+        const isNewSecret = (room.secretCode && room.secretCode !== lastKnownRoomSecret);
+        const isLobby = (room.status === 'LOBBY');
+        const hasNoGuesses = (!room.guesses || Object.keys(room.guesses).length === 0);
+
+        if (isNewSecret || isLobby || hasNoGuesses) {
           lastKnownRoomSecret = room.secretCode;
           playerSubmittedSessions = {};
           currentInputDigits = [];
           lastPlayerSessionNumber = null;
           isKeypadRendered = false;
+          
           const playerTbody = document.getElementById('player-table-tbody');
           if (playerTbody) {
             playerTbody.innerHTML = `<tr><td colspan="4" class="py-4 text-slate-500 italic">Belum ada tebakan.</td></tr>`;
@@ -1142,7 +1150,7 @@
       });
     }
 
-    // ISOLATED PLAYER UI UPDATE (Solves Mobile Input Reset Bug)
+    // ISOLATED PLAYER UI UPDATE (Solves Mobile Input Reset & History Lingering Bugs)
     function updatePlayerGameplayUI(room) {
       const isPosisi = selectedGameType === 'POSISI_BENAR';
       const currentSess = room.sessionNumber || 1;
@@ -1199,7 +1207,7 @@
       if (isPosisi) renderDigitSlots();
       else renderBoomInput();
 
-      renderPlayerHistoryTable(room.guesses || {});
+      renderPlayerHistoryTable(room.guesses || null);
     }
 
     function setupPlayerKeypadAndTables() {
@@ -1426,11 +1434,16 @@
     }
 
     function renderPlayerHistoryTable(allGuesses) {
+      const tbody = document.getElementById('player-table-tbody');
+      if (!allGuesses || typeof allGuesses !== 'object' || Object.keys(allGuesses).length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-slate-500 italic">Belum ada tebakan.</td></tr>`;
+        return;
+      }
+
       const myGuesses = Object.values(allGuesses)
-        .filter(g => g.playerId === localPlayerId)
+        .filter(g => g && g.playerId === localPlayerId)
         .sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-      const tbody = document.getElementById('player-table-tbody');
       if (myGuesses.length === 0) {
         tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-slate-500 italic">Belum ada tebakan.</td></tr>`;
         return;
