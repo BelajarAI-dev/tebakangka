@@ -249,7 +249,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
           <!-- QR Code Container -->
           <div class="flex flex-col items-center justify-center p-4 bg-slate-950 rounded-2xl border border-slate-800">
-            <div id="qrcode-container" class="bg-white p-3 rounded-xl"></div>
+            <div id="qrcode-container" class="bg-white p-3 rounded-xl min-w-[120px] min-h-[120px] flex items-center justify-center"></div>
             <span class="text-[10px] text-slate-400 mt-2">Pindai untuk Bergabung</span>
           </div>
 
@@ -288,7 +288,7 @@
             <h2 id="host-active-game-title" class="fredoka text-2xl font-bold text-white">Posisi Benar</h2>
           </div>
 
-          <!-- Timer Display -->
+          <!-- Timer Display & Actions -->
           <div class="flex items-center gap-4">
             <div class="flex flex-col items-end">
               <span class="text-[10px] text-slate-400 font-bold tracking-wider">SISA WAKTU</span>
@@ -306,7 +306,7 @@
           </div>
         </div>
 
-        <!-- SPECIAL GAME MODE DISPLAY (Angka Boom Bounds Card or Posisi Secret Info) -->
+        <!-- SPECIAL GAME MODE DISPLAY (Angka Boom Bounds Card) -->
         <div id="host-boom-bounds-container" class="hidden bg-slate-900/80 border border-rose-500/40 rounded-3xl p-6 text-center space-y-3 shadow-2xl pulse-glow">
           <span class="text-xs font-bold text-rose-400 tracking-widest uppercase">RENTANG ANGKA BOOM AKTIF</span>
           <div class="flex justify-center items-center gap-4 sm:gap-8">
@@ -346,7 +346,7 @@
             <table class="w-full text-center text-xs">
               <thead>
                 <tr id="host-table-thead" class="text-slate-400 border-b border-slate-800 uppercase font-bold">
-                  <!-- Injected via JS depending on game mode -->
+                  <!-- Injected via JS -->
                 </tr>
               </thead>
               <tbody id="host-table-tbody" class="divide-y divide-slate-800/60 font-mono">
@@ -407,7 +407,7 @@
       <form onsubmit="handlePlayerJoin(event)" class="space-y-4">
         <div>
           <label class="block text-xs font-bold text-slate-300 mb-1">GAME PIN (6 DIGIT)</label>
-          <input type="number" id="player-pin-input" required placeholder="Contoh: 482109" maxlength="6" class="w-full py-3.5 px-4 rounded-xl bg-slate-950 border border-slate-800 text-white text-center text-2xl font-mono tracking-widest font-black focus:outline-none focus:border-emerald-500 transition">
+          <input type="number" id="player-pin-input" required placeholder="Contoh: 482109" class="w-full py-3.5 px-4 rounded-xl bg-slate-950 border border-slate-800 text-white text-center text-2xl font-mono tracking-widest font-black focus:outline-none focus:border-emerald-500 transition">
         </div>
 
         <div>
@@ -459,12 +459,12 @@
         </div>
       </div>
 
-      <!-- STATUS OVERLAY BANNER (SUBMITTED / TIMER 0S) -->
+      <!-- STATUS OVERLAY BANNER -->
       <div id="player-status-banner" class="hidden p-3 rounded-xl text-center text-xs font-bold transition">
         <!-- Injected via JS -->
       </div>
 
-      <!-- RENTANG BOOM CARD FOR PLAYER (Only visible in Angka Boom mode) -->
+      <!-- RENTANG BOOM CARD FOR PLAYER -->
       <div id="player-boom-bounds-card" class="hidden bg-slate-950 p-3.5 rounded-2xl border border-rose-500/30 text-center">
         <span class="text-[10px] font-bold text-rose-400 uppercase tracking-wider block">RENTANG BOOM AKTIF HP ANDA</span>
         <div class="flex justify-center items-center gap-4 mt-1 font-mono">
@@ -477,13 +477,13 @@
       <!-- INPUT DISPLAY & KEYPAD CONTAINER -->
       <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-2xl backdrop-blur-xl space-y-4">
         
-        <!-- Input Slots Display -->
+        <!-- Input Display -->
         <div class="text-center space-y-2">
           <label id="player-input-label" class="block text-xs font-bold text-slate-400">MASUKKAN ANGKA TEBAKAN</label>
           
-          <!-- Slots for Posisi Benar (3 or 4 digits) -->
+          <!-- Slots for Posisi Benar -->
           <div id="digit-slots-container" class="flex justify-center gap-3 py-2">
-            <!-- Dynamically generated 3 or 4 slots -->
+            <!-- Dynamically generated slots -->
           </div>
 
           <!-- Integer Display for Angka Boom -->
@@ -494,7 +494,7 @@
           </div>
         </div>
 
-        <!-- Custom Keypad Container -->
+        <!-- Custom Touch Keypad -->
         <div id="keypad-container" class="space-y-2">
           <!-- Dynamically generated Touch Keypad -->
         </div>
@@ -568,7 +568,7 @@
     let localPlayerId = 'P_' + Math.random().toString(36).substring(2, 9);
     let localPlayerNickname = '';
     let currentInputDigits = [];
-    let playerSubmittedSessions = {}; // tracks session numbers player submitted to
+    let playerSubmittedSessions = {};
 
     // Web Audio Synthesizer for SFX
     function playSound(type) {
@@ -601,11 +601,11 @@
           osc.stop(ctx.currentTime + 0.4);
         }
       } catch (e) {
-        // Silent fallback if audio context blocked
+        // Silent fallback
       }
     }
 
-    // Helper: Screen Router
+    // Router Helper
     function showScreen(screenId) {
       const screens = [
         'screen-role-select',
@@ -737,13 +737,9 @@
     // --- CREATE NEW GAME (HOST) ---
     function createNewGameAsHost() {
       currentRoomPin = Math.floor(100000 + Math.random() * 900000).toString();
-      let secretCode = '';
-
-      if (selectedGameType === 'POSISI_BENAR') {
-        secretCode = generateUniqueCode(selectedDigitMode);
-      } else {
-        secretCode = generateSecretNumber(selectedBoomRange).toString();
-      }
+      let secretCode = selectedGameType === 'POSISI_BENAR' 
+        ? generateUniqueCode(selectedDigitMode) 
+        : generateSecretNumber(selectedBoomRange).toString();
 
       const roomData = {
         pin: currentRoomPin,
@@ -769,17 +765,19 @@
             ? `🎯 Posisi Benar (${selectedDigitMode} Digit)` 
             : `💣 Angka Boom (0 - ${selectedBoomRange})`;
 
-          // Render QR Code safely
+          // Render QR Code
           const qrContainer = document.getElementById('qrcode-container');
           qrContainer.innerHTML = '';
           if (typeof QRCode !== 'undefined') {
-            new QRCode(qrContainer, {
-              text: window.location.origin + window.location.pathname + '?pin=' + currentRoomPin,
-              width: 120,
-              height: 120,
-              colorDark : "#020617",
-              colorLight : "#ffffff"
-            });
+            try {
+              new QRCode(qrContainer, {
+                text: window.location.origin + window.location.pathname + '?pin=' + currentRoomPin,
+                width: 120,
+                height: 120,
+                colorDark : "#020617",
+                colorLight : "#ffffff"
+              });
+            } catch(e) {}
           }
 
           listenToHostLobby();
@@ -801,7 +799,7 @@
           listContainer.innerHTML = `<span class="text-xs text-slate-500 italic p-2">Menunggu peserta memasukkan PIN...</span>`;
         } else {
           listContainer.innerHTML = Object.values(players).map(p => `
-            <span class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold text-emerald-400 flex items-center gap-1.5 animate-slide-in">
+            <span class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold text-emerald-400 flex items-center gap-1.5">
               <i class="fa-solid fa-user text-[10px]"></i> ${escapeHtml(p.nickname)}
             </span>
           `).join('');
@@ -841,6 +839,7 @@
 
       const thead = document.getElementById('host-table-thead');
       if (isPosisi) {
+        // Posisi Benar column is OMITTED on host display table!
         thead.innerHTML = `
           <th class="py-2.5 px-3">SESI</th>
           <th class="py-2.5 px-4 text-left">NICKNAME</th>
@@ -873,7 +872,7 @@
         if (hostCurrentTimer === 0) {
           clearInterval(hostTimerInterval);
           playSound('tick');
-          // Trigger delayed reveal update on projector!
+          // Delayed reveal on projector when timer reaches 0s!
           revealHostDashboardSessionResults();
         }
       }, 1000);
@@ -896,11 +895,11 @@
         const guesses = snapshot.val() || {};
         const guessArray = Object.values(guesses);
 
-        // Count submitted for current session
+        // Update live submission count text
         const currentSessionGuesses = guessArray.filter(g => (g.sessionNumber || 1) === hostSessionNumber);
         document.getElementById('host-submitted-count-text').innerText = `${currentSessionGuesses.length} Peserta Sudah Mengirim Tebakan Sesi Ini`;
 
-        // Check if anyone won immediately
+        // Check if any player won
         const winner = guessArray.find(g => g.isWin === true);
         if (winner) {
           triggerHostWinSequence(winner);
@@ -920,10 +919,10 @@
         const guesses = room.guesses || {};
         let guessArray = Object.values(guesses);
 
-        // Sort by timestamp
+        // Sort by timestamp ascending
         guessArray.sort((a,b) => (a.timestamp || 0) - (b.timestamp || 0));
 
-        // Take last 10 guesses (FIFO Display)
+        // Display latest 10 guesses (FIFO)
         const feed10 = guessArray.slice(-10);
 
         const tbody = document.getElementById('host-table-tbody');
@@ -946,7 +945,7 @@
             </tr>
           `).join('');
         } else {
-          // ANGKA BOOM BOUNDS CALCULATION
+          // Calculate Angka Boom bounds
           let lower = 0;
           let upper = selectedBoomRange;
           const secretVal = parseInt(room.secretCode, 10);
@@ -1078,7 +1077,6 @@
         document.getElementById('nav-pin-val').innerText = pin;
         document.getElementById('nav-room-badge').classList.remove('hidden');
 
-        // Register Player in Room
         db.ref(`rooms/${pin}/players/${localPlayerId}`).set({
           nickname: nick,
           joinedAt: firebase.database.ServerValue.TIMESTAMP
@@ -1105,7 +1103,6 @@
           showScreen('screen-player-game');
           updatePlayerGameplayUI(room);
         } else if (room.status === 'FINISHED') {
-          alert(`Game telah berakhir! Pemenang: ${room.winnerNickname || 'Selesai'}`);
           goToLandingScreen();
         }
       });
@@ -1131,15 +1128,14 @@
 
       const banner = document.getElementById('player-status-banner');
 
-      // Keypad Locking Logic
       if (hasSubmitted) {
         banner.className = "p-3 rounded-xl text-center text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
-        banner.innerText = `TEBAKAN SESI #${currentSess} TERKIRIM! (1/1) - Menunggu Sesi Berikutnya`;
+        banner.innerText = `✅ TEBAKAN SESI #${currentSess} TERKIRIM! (1/1) - Menunggu Sesi Berikutnya`;
         banner.classList.remove('hidden');
         disableKeypad(true);
       } else if (timerVal === 0) {
         banner.className = "p-3 rounded-xl text-center text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40";
-        banner.innerText = `SESI TERJEDA (0s) - Menunggu Host Melanjutkan Sesi`;
+        banner.innerText = `🔒 SESI TERJEDA (0s) - Menunggu Host Melanjutkan Sesi`;
         banner.classList.remove('hidden');
         disableKeypad(true);
       } else {
@@ -1207,8 +1203,6 @@
 
     function renderKeypad() {
       const container = document.getElementById('keypad-container');
-      const isPosisi = selectedGameType === 'POSISI_BENAR';
-
       let numpadHTML = `
         <div class="grid grid-cols-3 gap-2">
           ${[1,2,3,4,5,6,7,8,9].map(num => `
